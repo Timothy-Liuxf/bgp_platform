@@ -5,9 +5,18 @@
             "intelliSenseMode": "linux-gcc-x64",
             "compilerPath": "/usr/bin/g++",
             "cppStandard": "c++17",
+            "compilerArgs": [
+                "-pthread",
+                "-O2",
+                "-Wall",
+                "-Wpedantic",
+                "-Wextra",
+                "-Werror"
+            ],
             "includePath": [
                 "src",
-                "third_party/jsoncons/include"
+                "third_party/jsoncons/include",
+                "third_party/inotify-cpp/src/include"
             ]
         }
     ],

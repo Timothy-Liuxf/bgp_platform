@@ -1,5 +1,5 @@
-#ifndef BGP_PLATFORM_DETECTOR_TYPES_H_
-#define BGP_PLATFORM_DETECTOR_TYPES_H_
+#ifndef BGP_PLATFORM_DETECTOR_TYPES_HPP_
+#define BGP_PLATFORM_DETECTOR_TYPES_HPP_
 
 #include <cstddef>
 #include <cstdint>
@@ -14,4 +14,4 @@ enum class ID : std::uint64_t {};
 
 BGP_PLATFORM_NAMESPACE_END
 
-#endif  // BGP_PLATFORM_DETECTOR_TYPES_H_
+#endif  // BGP_PLATFORM_DETECTOR_TYPES_HPP_

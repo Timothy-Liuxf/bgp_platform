@@ -1,4 +1,5 @@
 noinst_HEADERS +=                                                              \
     %reldir%/defs.hpp                                                          \
     %reldir%/files.hpp                                                         \
+    %reldir%/concurrent_queue.hpp                                              \
     ${NOTHING}

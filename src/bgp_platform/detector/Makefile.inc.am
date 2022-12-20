@@ -3,10 +3,12 @@ noinst_HEADERS +=                                                              \
     %reldir%/route_info.hpp                                                    \
     %reldir%/init_info.hpp                                                     \
     %reldir%/types.hpp                                                         \
+    %reldir%/file_watcher.hpp                                                  \
     ${NOTHING}
 
 noinst_LIBRARIES += build/lib/libdetector.a
 build_lib_libdetector_a_SOURCES =                                              \
     %reldir%/init_info.cc                                                      \
     %reldir%/detector.cc                                                       \
+    %reldir%/file_watcher.cc                                                   \
     ${NOTHING}

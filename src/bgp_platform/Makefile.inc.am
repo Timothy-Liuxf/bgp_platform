@@ -5,4 +5,10 @@ bin_PROGRAMS += build/bin/bgp_platform
 build_bin_bgp_platform_SOURCES = %reldir%/main.cc
 build_bin_bgp_platform_LDADD =                                                 \
     build/lib/libdetector.a                                                    \
-    -lstdc++fs
+    -lstdc++fs                                                                 \
+    -Lthird_party/inotify-cpp/build/src -linotify-cpp                          \
+    ${NOTHING}
+
+build_bin_bgp_platform_LDFLAGS =                                               \
+    -Wl,-Rthird_party/inotify-cpp/build/src                                    \
+    ${NOTHING}

@@ -72,6 +72,10 @@
         "stop_token": "cpp",
         "thread": "cpp",
         "valarray": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "strstream": "cpp",
+        "complex": "cpp",
+        "cfenv": "cpp",
+        "typeindex": "cpp"
     }
 }

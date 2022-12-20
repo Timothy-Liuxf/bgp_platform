@@ -11,7 +11,12 @@ AM_INIT_AUTOMAKE([foreign subdir-objects])
 
 AX_CXX_COMPILE_STDCXX_17([noext], [mandatory])
 AX_APPEND_COMPILE_FLAGS([-Wall -Wpedantic -Wextra -Werror -O2], [CXXFLAGS])
-AX_APPEND_COMPILE_FLAGS([-Isrc -Ithird_party/jsoncons/include], [CXXFLAGS])
+AX_APPEND_COMPILE_FLAGS([-pthread], [CXXFLAGS])
+AX_APPEND_COMPILE_FLAGS([ dnl
+    -Isrc dnl
+    -Ithird_party/jsoncons/include dnl
+    -Ithird_party/inotify-cpp/src/include dnl
+], [CXXFLAGS])
 
 # Checks for programs.
 AC_PROG_CXX

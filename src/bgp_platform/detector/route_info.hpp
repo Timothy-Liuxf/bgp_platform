@@ -1,5 +1,5 @@
-#ifndef BGP_PLATFORM_ROUTE_INFO_H_
-#define BGP_PLATFORM_ROUTE_INFO_H_
+#ifndef BGP_PLATFORM_ROUTE_INFO_HPP_
+#define BGP_PLATFORM_ROUTE_INFO_HPP_
 
 #include <chrono>
 #include <unordered_map>
@@ -31,4 +31,4 @@ struct CountryRouteInfo {
 
 BGP_PLATFORM_NAMESPACE_END
 
-#endif  // BGP_PLATFORM_ROUTE_INFO_H_
+#endif  // BGP_PLATFORM_ROUTE_INFO_HPP_
