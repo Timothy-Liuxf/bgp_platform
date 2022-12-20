@@ -1,0 +1,12 @@
+noinst_HEADERS +=                                                              \
+    %reldir%/detector.hpp                                                      \
+    %reldir%/route_info.hpp                                                    \
+    %reldir%/init_info.hpp                                                     \
+    %reldir%/types.hpp                                                         \
+    ${NOTHING}
+
+noinst_LIBRARIES += build/lib/libdetector.a
+build_lib_libdetector_a_SOURCES =                                              \
+    %reldir%/init_info.cc                                                      \
+    %reldir%/detector.cc                                                       \
+    ${NOTHING}

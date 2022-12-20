@@ -95,3 +95,6 @@ Makefile
 
 # Data files
 info/
+
+# Build files
+build/

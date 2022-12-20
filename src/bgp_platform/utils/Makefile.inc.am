@@ -1,0 +1,4 @@
+noinst_HEADERS +=                                                              \
+    %reldir%/defs.hpp                                                          \
+    %reldir%/files.hpp                                                         \
+    ${NOTHING}

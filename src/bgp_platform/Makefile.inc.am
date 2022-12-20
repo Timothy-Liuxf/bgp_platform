@@ -1,0 +1,8 @@
+include %reldir%/utils/Makefile.inc.am
+include %reldir%/detector/Makefile.inc.am
+
+bin_PROGRAMS += build/bin/bgp_platform
+build_bin_bgp_platform_SOURCES = %reldir%/main.cc
+build_bin_bgp_platform_LDADD =                                                 \
+    build/lib/libdetector.a                                                    \
+    -lstdc++fs
