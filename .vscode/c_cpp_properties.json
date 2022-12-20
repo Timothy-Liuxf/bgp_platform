@@ -4,7 +4,11 @@
             "name": "Linux",
             "intelliSenseMode": "linux-gcc-x64",
             "compilerPath": "/usr/bin/g++",
-            "cppStandard": "c++17"
+            "cppStandard": "c++17",
+            "includePath": [
+                "src",
+                "third_party/jsoncons/include"
+            ]
         }
     ],
     "version": 4

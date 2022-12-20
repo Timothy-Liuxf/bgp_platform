@@ -92,3 +92,6 @@ Makefile
 !.vscode/extensions.json
 !.vscode/c_cpp_properties.json
 *.code-workspace
+
+# Data files
+info/
