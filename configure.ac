@@ -4,7 +4,7 @@
 AC_PREREQ([2.71])
 AC_INIT([bgp_platform], [1.0.0])
 AC_CONFIG_SRCDIR([third_party/jsoncons/third_party/catch/catch.hpp])
-AC_CONFIG_MACRO_DIRS([third_party/autoconf-archive/m4])
+AC_CONFIG_MACRO_DIRS([m4 third_party/autoconf-archive/m4])
 AC_PROG_RANLIB
 
 AM_INIT_AUTOMAKE([foreign subdir-objects])
@@ -41,6 +41,9 @@ AC_FUNC_ERROR_AT_LINE
 AC_FUNC_MALLOC
 AC_FUNC_STRTOD
 AC_CHECK_FUNCS([dup2 floor localeconv memmove memset pow select sqrt strtol strtoul])
+
+# Build third party libraries
+AX_BUILD_THIRD_PARTY
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
