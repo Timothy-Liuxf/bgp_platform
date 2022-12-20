@@ -94,7 +94,8 @@ Makefile
 *.code-workspace
 
 # Data files
-info/
+/info/
 
 # Build files
-build/
+/build/
+bgp_platform-*.tar.gz
