@@ -16,8 +16,12 @@ BGP_PLATFORM_NAMESPACE_BEGIN
 InitInfo::InitInfo(fs::path as_info_path, fs::path top_nx_path,
                    fs::path top_ip_path) {
   {
-    std::ifstream as_info_file(as_info_path);
-    auto          as_info_json = jsoncons::json::parse(as_info_file);
+    std::ifstream as_info_file(as_info_path, std::ios::in);
+    if (!as_info_file) {
+      throw std::runtime_error("Cannot open as info file!");
+    }
+
+    auto as_info_json = jsoncons::json::parse(as_info_file);
     for (const auto& as_info : as_info_json.object_range()) {
       auto as_num       = static_cast<AsNum>(std::stoi(as_info.key()));
       auto as_info_data = as_info.value().as<AsInitInfo>();
@@ -25,8 +29,11 @@ InitInfo::InitInfo(fs::path as_info_path, fs::path top_nx_path,
     }
   }
   {
-    std::ifstream top_ip_file(top_ip_path);
-    std::string   buf;
+    std::ifstream top_ip_file(top_ip_path, std::ios::in);
+    if (!top_ip_file) {
+      throw std::runtime_error("Cannot open top ip file!");
+    }
+    std::string buf;
     while (std::getline(top_ip_file, buf)) {
       // TODO: Read top ip
     }
