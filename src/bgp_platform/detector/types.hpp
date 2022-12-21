@@ -8,9 +8,14 @@
 
 BGP_PLATFORM_NAMESPACE_BEGIN
 
-enum class VpNum : std::uint16_t {};
+struct Line {
+  std::string buf {};
+  std::size_t num = 0;
+};
+
 enum class AsNum : std::uint16_t {};
 enum class ID : std::uint64_t {};
+using Country = std::string;
 
 BGP_PLATFORM_NAMESPACE_END
 

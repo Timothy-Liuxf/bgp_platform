@@ -2,4 +2,7 @@ noinst_HEADERS +=                                                              \
     %reldir%/defs.hpp                                                          \
     %reldir%/files.hpp                                                         \
     %reldir%/concurrent_queue.hpp                                              \
+    %reldir%/strconv.hpp                                                       \
+    %reldir%/clock.hpp                                                         \
+    %reldir%/ip.hpp                                                            \
     ${NOTHING}

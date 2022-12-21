@@ -100,3 +100,6 @@ Makefile
 # Build files
 /build/
 bgp_platform-*.tar.gz
+
+# Log files
+log.txt

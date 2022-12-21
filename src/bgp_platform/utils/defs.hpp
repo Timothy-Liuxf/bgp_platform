@@ -5,4 +5,9 @@
 #define BGP_PLATFORM_NAMESPACE_BEGIN namespace BGP_PLATFORM_NAMESPACE {
 #define BGP_PLATFORM_NAMESPACE_END   }
 
+#define BGP_PLATFORM_LIKELY(x)       __builtin_expect(!!(x), 1)
+#define BGP_PLATFORM_UNLIKELY(x)     __builtin_expect(!!(x), 0)
+#define BGP_PLATFORM_IF_LIKELY(x)    if (BGP_PLATFORM_LIKELY(x))
+#define BGP_PLATFORM_IF_UNLIKELY(x)  if (BGP_PLATFORM_UNLIKELY(x))
+
 #endif  // BGP_PLATFORM_UTILS_DEFS_HPP_
