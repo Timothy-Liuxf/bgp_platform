@@ -53,4 +53,28 @@ Country InitInfo::GetAsCountry(AsNum as_num) const {
   return it->second.country;
 }
 
+std::string InitInfo::GetAsAutName(AsNum as_num) const {
+  auto it = this->as_info_.find(as_num);
+  if (it == this->as_info_.end()) {
+    return {};
+  }
+  return it->second.aut_name;
+}
+
+std::string InitInfo::GetAsOrgName(AsNum as_num) const {
+  auto it = this->as_info_.find(as_num);
+  if (it == this->as_info_.end()) {
+    return {};
+  }
+  return it->second.org_name;
+}
+
+std::string InitInfo::GetAsType(AsNum as_num) const {
+  auto it = this->as_info_.find(as_num);
+  if (it == this->as_info_.end()) {
+    return {};
+  }
+  return it->second.as_type;
+}
+
 BGP_PLATFORM_NAMESPACE_END

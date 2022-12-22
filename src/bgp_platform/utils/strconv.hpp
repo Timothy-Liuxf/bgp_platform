@@ -9,6 +9,8 @@
 
 BGP_PLATFORM_NAMESPACE_BEGIN
 
+using std::literals::string_view_literals::        operator""sv;
+
 [[nodiscard]] inline std::vector<std::string_view> SplitString(
     std::string_view str, char delim) {
   std::vector<std::string_view> elems;
@@ -26,8 +28,8 @@ BGP_PLATFORM_NAMESPACE_BEGIN
 }
 
 template <typename Number>
-[[nodiscard]] inline Number StringViewToNumber(std::string_view str,
-                                               int              base = 10) {
+[[nodiscard]] inline Number StringToNumber(std::string_view str,
+                                           int              base = 10) {
   Number result;
   auto [ptr, ec] =
       std::from_chars(str.data(), str.data() + str.size(), result, base);
@@ -36,6 +38,11 @@ template <typename Number>
     throw std::invalid_argument("File to convert string to number!");
   }
   return result;
+}
+
+[[nodiscard]] inline bool StartsWith(std::string_view str,
+                                     std::string_view prefix) {
+  return str.substr(0, prefix.size()) == prefix;
 }
 
 BGP_PLATFORM_NAMESPACE_END

@@ -21,7 +21,13 @@ class Detector {
   RouteInfo route_info_;
 
  private:
-  void ReadRibFile(fs::path rib_path);
+  [[nodiscard]] bool InBlackList(const IPPrefix&) const { return false; }
+
+ private:
+  void ReadRibFile(fs::path file_path);
+  void ReadUpdateFile(fs::path file_path);
+  void DetectOutage(DumpedFile update_file);
+  void CheckPrefixOutage(AsNum owner_as, IPPrefix prefix, TimeStamp timestamp);
 };
 
 BGP_PLATFORM_NAMESPACE_END

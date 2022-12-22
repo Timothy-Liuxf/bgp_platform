@@ -28,10 +28,35 @@ namespace fs = std::filesystem;
 
 class DumpedFile {
  public:
-  DumpedFile(const fs::path& path) : path_(path) {}
+  explicit DumpedFile(const fs::path& path) : path_(path) {}
   DumpedFile(const DumpedFile&) = delete;
-  DumpedFile(DumpedFile&&)      = default;
-  ~DumpedFile() { fs::remove(this->path_); }
+  DumpedFile(DumpedFile&& other) noexcept : path_(std::move(other.path_)) {
+    other.path_.clear();
+  }
+  DumpedFile& operator=(const DumpedFile&) = delete;
+  DumpedFile& operator=(DumpedFile&& other) noexcept {
+    BGP_PLATFORM_IF_UNLIKELY(this == &other) { return *this; }
+    this->path_ = std::move(other.path_);
+    other.path_.clear();
+    return *this;
+  }
+
+  ~DumpedFile() noexcept {
+    try {
+      if (!this->path_.empty()) {
+        fs::remove(this->path_);
+      }
+    } catch (std::exception& e) {
+      try {
+        std::cerr << "Failed to remove file: " << this->path_.c_str()
+                  << ", reason: " << e.what() << std::endl;
+      } catch (...) {
+        // ignore
+      }
+    } catch (...) {
+      // ignore
+    }
+  }
 
   const fs::path& path() const { return this->path_; }
 

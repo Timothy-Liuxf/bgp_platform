@@ -10,6 +10,8 @@ BGP_PLATFORM_NAMESPACE_BEGIN
 
 using TimeStamp =
     std::chrono::time_point<std::chrono::system_clock>::duration::rep;
+using TimePoint = std::chrono::time_point<std::chrono::system_clock>;
+using Duration  = std::chrono::system_clock::duration;
 
 [[nodiscard]] inline TimeStamp GetTimeStamp() {
   return std::chrono::system_clock::now().time_since_epoch().count();

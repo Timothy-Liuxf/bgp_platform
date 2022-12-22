@@ -13,7 +13,7 @@ BGP_PLATFORM_NAMESPACE_BEGIN
 
 class FileWatcher {
  public:
-  FileWatcher(fs::path watch_path);
+  explicit FileWatcher(fs::path watch_path);
 
   [[nodiscard]] fs::path WaitForNewFile();
 

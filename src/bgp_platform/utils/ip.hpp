@@ -63,7 +63,7 @@ constexpr inline bool operator==(const IPPrefix& prefix1,
     throw std::invalid_argument("Invalid IP prefix!");
   }
   return IPPrefix {StringToIPAddr(str.substr(0, pos)),
-                   StringViewToNumber<uint8_t>(str.substr(pos + 1))};
+                   StringToNumber<uint8_t>(str.substr(pos + 1))};
 }
 
 BGP_PLATFORM_NAMESPACE_END

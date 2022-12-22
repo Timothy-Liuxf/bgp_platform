@@ -15,11 +15,11 @@
 BGP_PLATFORM_NAMESPACE_BEGIN
 
 struct CountryRouteInfo {
-  std::unordered_set<AsNum>             normal_ass;
-  std::unordered_set<AsNum>             outage_ass;
-  ID                                    outage_id         = {};
-  bool                                  is_outage         = false;
-  std::chrono::system_clock::time_point outage_start_time = {};
+  std::unordered_set<AsNum> normal_ass;
+  std::unordered_set<AsNum> outage_ass;
+  ID                        outage_id              = {};
+  bool                      is_outage              = false;
+  TimePoint                 last_outage_start_time = {};
 };
 
 struct AsRouteInfo {
@@ -27,9 +27,9 @@ struct AsRouteInfo {
     std::unordered_set<AsNum>                     reachable_vps;
     std::unordered_set<AsNum>                     unreachable_vps;
     std::unordered_map<AsNum, std::vector<AsNum>> vp_paths;
-    ID                                            outage_id         = {};
-    bool                                          is_outage         = false;
-    std::chrono::system_clock::time_point         outage_start_time = {};
+    ID                                            outage_id = {};
+    bool                                          is_outage = false;
+    TimePoint                                     last_outage_start_time = {};
   };
 
   std::unordered_set<IPPrefix>                  normal_prefixes;
@@ -37,7 +37,7 @@ struct AsRouteInfo {
   ID                                            outage_id = {};
   bool                                          is_outage = false;
   std::unordered_map<IPPrefix, PrefixRouteInfo> prefixes;
-  TimeStamp                                     outage_start_time = {};
+  TimeStamp                                     last_outage_start_time = {};
 };
 
 struct PrefixRouteInfo {
