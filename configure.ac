@@ -10,7 +10,12 @@ AC_PROG_RANLIB
 AM_INIT_AUTOMAKE([foreign subdir-objects])
 
 AX_CXX_COMPILE_STDCXX_17([noext], [mandatory])
-AX_APPEND_COMPILE_FLAGS([-Wall -Wpedantic -Wextra -Werror -O2], [CXXFLAGS])
+
+AS_CASE([X$BUILD_CONFIG],
+    [XRelease|Xrelease|X], [AX_APPEND_COMPILE_FLAGS([-O2], [CXXFLAGS])],
+    [XDebug|Xdebug], [AX_APPEND_COMPILE_FLAGS([-g], [CXXFLAGS])],
+    [AC_MSG_ERROR([Unknown build configuration: $BUILD_CONFIG!])])
+AX_APPEND_COMPILE_FLAGS([-Wall -Wpedantic -Wextra -Werror], [CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS([-pthread], [CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS([ dnl
     -Isrc dnl
