@@ -10,6 +10,8 @@
 #include <string_view>
 #include <thread>
 
+#include <fmt/chrono.h>
+
 #include <bgp_platform/utils/clock.hpp>
 #include <bgp_platform/utils/ip.hpp>
 #include <bgp_platform/utils/strconv.hpp>
@@ -107,12 +109,10 @@ void Detector::ReadRibFile(fs::path file_path) {
       auto as_num = as_path.back();
 
       BGP_PLATFORM_IF_UNLIKELY(is_first_success_line) {
-        auto               utc_time = ToUTCTime(timestamp);
-        std::ostringstream string_builder;
-        string_builder << utc_time.year << "-" << utc_time.month << "-"
-                       << utc_time.day << " " << utc_time.hour << ":"
-                       << utc_time.minute << ":" << utc_time.second;
-        time_string           = string_builder.str();
+        time_string =
+            fmt::format("{:%Y-%m-%d %H:%M:%S}",
+                        fmt::gmtime(std::chrono::system_clock::to_time_t(
+                            TimpStampToTimePoint(timestamp))));
         is_first_success_line = false;
       }
 
@@ -133,7 +133,7 @@ void Detector::ReadRibFile(fs::path file_path) {
 
       // TODO: Build IP Prefix Tree
     } catch (std::exception& e) {
-      std::cout << "[WARNING] Failed to parse line: " << line.num << std::endl;
+      std::cout << "[WARNING] Failed to parse line: " << line.num << '\n';
       std::cout << "- Exception: " << e.what() << std::endl;
       continue;
     }
@@ -165,15 +165,11 @@ void Detector::DetectOutage(DumpedFile update_file) {
       auto flag      = fields[2];
       auto vp_num =
           AsNum(StringToNumber<std::underlying_type_t<AsNum>>(fields[4]));
-      auto prefix      = StringToIPPrefix(fields[5]);
-      auto time_string = [&] {
-        auto               utc_time = ToUTCTime(timestamp);
-        std::ostringstream string_builder;
-        string_builder << utc_time.year << "-" << utc_time.month << "-"
-                       << utc_time.day << " " << utc_time.hour << ":"
-                       << utc_time.minute << ":" << utc_time.second;
-        return string_builder.str();
-      }();
+      auto prefix = StringToIPPrefix(fields[5]);
+      auto time_string =
+          fmt::format("{:%Y-%m-%d %H:%M:%S}",
+                      fmt::gmtime(std::chrono::system_clock::to_time_t(
+                          TimpStampToTimePoint(timestamp))));
 
       if (flag == "W"sv) {
         if (auto prefix_info_itr =
@@ -213,7 +209,7 @@ void Detector::DetectOutage(DumpedFile update_file) {
         }
       }
     } catch (std::exception& e) {
-      std::cout << "[WARNING] Failed to parse line: " << line.num << std::endl;
+      std::cout << "[WARNING] Failed to parse line: " << line.num << '\n';
       std::cout << "- Exception: " << e.what() << std::endl;
       continue;
     }

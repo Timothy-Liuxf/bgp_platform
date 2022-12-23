@@ -16,7 +16,8 @@
             "includePath": [
                 "src",
                 "third_party/jsoncons/include",
-                "third_party/inotify-cpp/src/include"
+                "third_party/inotify-cpp/src/include",
+                "third_party/fmt/include"
             ]
         }
     ],

@@ -21,6 +21,7 @@ AX_APPEND_COMPILE_FLAGS([ dnl
     -Isrc dnl
     -Ithird_party/jsoncons/include dnl
     -Ithird_party/inotify-cpp/src/include dnl
+    -Ithird_party/fmt/include -DFMT_HEADER_ONLY dnl
 ], [CXXFLAGS])
 
 # Checks for programs.
