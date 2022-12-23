@@ -29,6 +29,9 @@ AC_PROG_CXX
 AC_PROG_CPP
 
 # Checks for libraries.
+AX_CHECK_LIBPQXX_VERSION
+AC_CHECK_LIB([pq], [PQconnectdb], [], [AC_MSG_ERROR([libpq not found])])
+AC_CHECK_LIB([pqxx], [PQconnectdb], [], [AC_MSG_ERROR([libpqxx not found])])
 
 # Checks for header files.
 AC_CHECK_HEADERS([unistd.h])
