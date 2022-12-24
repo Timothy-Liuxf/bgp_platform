@@ -4,19 +4,20 @@
 #include <functional>
 #include <vector>
 
+#include <bgp_platform/common/types.hpp>
 #include <bgp_platform/utils/clock.hpp>
 #include <bgp_platform/utils/defs.hpp>
 #include <bgp_platform/utils/ip.hpp>
 
-#include "types.hpp"
-
 BGP_PLATFORM_NAMESPACE_BEGIN
 
-struct OutageEvent {
+namespace database::models {
+
+struct PrefixOutageEvent {
   struct Key {
     AsNum    owner_as;
     IPPrefix prefix;
-    ID       prefix_outage_id;
+    ID       outage_id;
   } key;
 
   struct Value {
@@ -34,16 +35,19 @@ struct OutageEvent {
   } value;
 };
 
+}  // namespace database::models
+
 BGP_PLATFORM_NAMESPACE_END
 
 namespace std {
 template <>
-struct hash<BGP_PLATFORM_NAMESPACE::OutageEvent::Key> {
+struct hash<BGP_PLATFORM_NAMESPACE::database::models::PrefixOutageEvent::Key> {
   std::size_t operator()(
-      const BGP_PLATFORM_NAMESPACE::OutageEvent::Key& key) const {
+      const BGP_PLATFORM_NAMESPACE::database::models::PrefixOutageEvent::Key&
+          key) const {
     return std::hash<BGP_PLATFORM_NAMESPACE::AsNum> {}(key.owner_as) ^
            std::hash<BGP_PLATFORM_NAMESPACE::IPPrefix> {}(key.prefix) ^
-           std::hash<BGP_PLATFORM_NAMESPACE::ID> {}(key.prefix_outage_id);
+           std::hash<BGP_PLATFORM_NAMESPACE::ID> {}(key.outage_id);
   }
 };
 }  // namespace std

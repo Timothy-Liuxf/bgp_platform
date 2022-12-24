@@ -10,7 +10,7 @@
 #include <bgp_platform/utils/defs.hpp>
 #include <bgp_platform/utils/ip.hpp>
 
-#include "types.hpp"
+#include <bgp_platform/common/types.hpp>
 
 BGP_PLATFORM_NAMESPACE_BEGIN
 

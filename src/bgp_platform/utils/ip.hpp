@@ -66,6 +66,23 @@ constexpr inline bool operator==(const IPPrefix& prefix1,
                    StringToNumber<uint8_t>(str.substr(pos + 1))};
 }
 
+[[nodiscard]] inline std::string IPPrefixToString(const IPPrefix& prefix) {
+  if (std::holds_alternative<::in_addr>(prefix.addr)) {
+    char buf[INET_ADDRSTRLEN];
+    if (::inet_ntop(AF_INET, &std::get<::in_addr>(prefix.addr), buf,
+                    INET_ADDRSTRLEN) != nullptr) {
+      return std::string(buf) + "/" + std::to_string(prefix.prefix_len);
+    }
+  } else {
+    char buf[INET6_ADDRSTRLEN];
+    if (::inet_ntop(AF_INET6, &std::get<::in6_addr>(prefix.addr), buf,
+                    INET6_ADDRSTRLEN) != nullptr) {
+      return std::string(buf) + "/" + std::to_string(prefix.prefix_len);
+    }
+  }
+  throw std::runtime_error("Failed to convert IP prefix to string!");
+}
+
 BGP_PLATFORM_NAMESPACE_END
 
 namespace std {

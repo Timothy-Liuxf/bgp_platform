@@ -12,19 +12,14 @@
 
 #include <fmt/chrono.h>
 
+#include <bgp_platform/common/types.hpp>
 #include <bgp_platform/utils/clock.hpp>
 #include <bgp_platform/utils/ip.hpp>
 #include <bgp_platform/utils/strconv.hpp>
 
 #include "file_watcher.hpp"
-#include "outage_event.hpp"
-#include "types.hpp"
 
 BGP_PLATFORM_NAMESPACE_BEGIN
-
-Detector::Detector(fs::path as_info_path, fs::path top_nx_path,
-                   fs::path top_ip_path)
-    : init_info_(as_info_path, top_nx_path, top_ip_path) {}
 
 void Detector::Detect(fs::path route_data_path) {
   if (!fs::exists(route_data_path)) {
@@ -246,8 +241,8 @@ void Detector::CheckPrefixOutage(AsNum owner_as, IPPrefix prefix,
             owner_as_route_info.outage_prefixes.insert(prefix);
 
             // Record the outage start information
-            ID          prefix_outage_id = ++prefix_info.outage_id;
-            OutageEvent outage_event {
+            ID prefix_outage_id = ++prefix_info.outage_id;
+            database::models::PrefixOutageEvent prefix_outage_event = {
                 {
                     owner_as,
                     prefix,
@@ -266,7 +261,7 @@ void Detector::CheckPrefixOutage(AsNum owner_as, IPPrefix prefix,
                     "",  // TODO: Record outage_level
                     "",  // TODO: Record outage_level_description
                 }};
-            (void)outage_event;
+            (void)prefix_outage_event;
             // TODO: Write to database
           }
         } else {

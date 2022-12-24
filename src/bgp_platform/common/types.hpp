@@ -1,8 +1,9 @@
-#ifndef BGP_PLATFORM_DETECTOR_TYPES_HPP_
-#define BGP_PLATFORM_DETECTOR_TYPES_HPP_
+#ifndef BGP_PLATFORM_COMMON_TYPES_HPP_
+#define BGP_PLATFORM_COMMON_TYPES_HPP_
 
 #include <cstddef>
 #include <cstdint>
+#include <string>
 #include <type_traits>
 
 #include <bgp_platform/utils/defs.hpp>
@@ -30,4 +31,4 @@ constexpr inline ID operator++(ID& id, int) {
 
 BGP_PLATFORM_NAMESPACE_END
 
-#endif  // BGP_PLATFORM_DETECTOR_TYPES_HPP_
+#endif  // BGP_PLATFORM_COMMON_TYPES_HPP_

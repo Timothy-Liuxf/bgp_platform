@@ -59,5 +59,8 @@ AC_CHECK_FUNCS([dup2 floor localeconv memmove memset pow select sqrt strtol strt
 # Build third party libraries
 AX_BUILD_THIRD_PARTY
 
+# Generate sql files
+AX_GENERATE_SQL
+
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

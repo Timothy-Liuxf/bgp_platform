@@ -17,10 +17,13 @@ using Duration  = std::chrono::system_clock::duration;
   return std::chrono::system_clock::now().time_since_epoch().count();
 }
 
-[[nodiscard]] inline std::chrono::time_point<std::chrono::system_clock>
-TimpStampToTimePoint(TimeStamp timestamp) {
+[[nodiscard]] inline TimePoint TimpStampToTimePoint(TimeStamp timestamp) {
   return std::chrono::system_clock::time_point(
       std::chrono::system_clock::duration(timestamp));
+}
+
+[[nodiscard]] inline TimeStamp TimePointToTimeStamp(TimePoint time_point) {
+  return time_point.time_since_epoch().count();
 }
 
 struct CalendarTime {
@@ -43,6 +46,26 @@ struct CalendarTime {
 
 [[nodiscard]] inline CalendarTime ToUTCTime(TimeStamp timestamp) {
   return ToUTCTime(TimpStampToTimePoint(timestamp));
+}
+
+struct CalendarDuration {
+  int days;
+  int hours;
+  int minutes;
+  int seconds;
+};
+
+[[nodiscard]] inline CalendarDuration ToCalendarDuration(Duration duration) {
+  auto seconds =
+      std::chrono::duration_cast<std::chrono::seconds>(duration).count();
+  auto minutes = seconds / 60;
+  seconds %= 60;
+  auto hours = minutes / 60;
+  minutes %= 60;
+  auto days = hours / 24;
+  hours %= 24;
+  return {static_cast<int>(days), static_cast<int>(hours),
+          static_cast<int>(minutes), static_cast<int>(seconds)};
 }
 
 BGP_PLATFORM_NAMESPACE_END

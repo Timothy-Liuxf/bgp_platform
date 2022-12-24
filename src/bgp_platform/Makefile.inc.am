@@ -1,12 +1,16 @@
 include %reldir%/utils/Makefile.inc.am
+include %reldir%/common/Makefile.inc.am
 include %reldir%/detector/Makefile.inc.am
+include %reldir%/database/Makefile.inc.am
 
 bin_PROGRAMS += build/bin/bgp_platform
 build_bin_bgp_platform_SOURCES = %reldir%/main.cc
 build_bin_bgp_platform_LDADD =                                                 \
     build/lib/libdetector.a                                                    \
+    build/lib/libdatabase.a                                                    \
     -lstdc++fs                                                                 \
     -Lthird_party/inotify-cpp/build/src -linotify-cpp                          \
+    -lpq -lpqxx                                                                \
     ${NOTHING}
 
 build_bin_bgp_platform_LDFLAGS =                                               \
