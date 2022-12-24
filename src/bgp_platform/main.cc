@@ -5,7 +5,7 @@ using namespace bgp_platform;
 int main() {
   Detector detector(
       {"info/new_as_dict.json", "info/top_nx.csv", "info/top_ip.txt"},
-      {"host", "port", "user", "password", "database"});
+      {"localhost", "5432", "testuser", "testpasswd", "testdb"});
   detector.Detect("build");
   return 0;
 }

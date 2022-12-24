@@ -258,6 +258,7 @@ void Detector::CheckPrefixOutage(AsNum owner_as, IPPrefix prefix,
                     TimePoint {},
                     Duration {},
                     {},  // TODO: Record pre_vp_paths
+                    {},  // TODO: Record eve_vp_paths
                     "",  // TODO: Record outage_level
                     "",  // TODO: Record outage_level_description
                 }};

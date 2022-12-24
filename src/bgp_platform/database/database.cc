@@ -1,5 +1,6 @@
 #include "database.hpp"
 
+#include <iostream>
 #include <type_traits>
 
 #include <fmt/chrono.h>
@@ -37,19 +38,23 @@ void Database::CreateTable() {
   work.exec(fmt::format(std::string({
 #include "sql/create_prefix_outage_table.sql.inc"
                         }),
-                        prefix_outage_table_name_));
-  work.commit();
+                        this->prefix_outage_table_name_));
+  std::cout << "Created prefix outage table: "
+            << this->prefix_outage_table_name_ << std::endl;
 
   work.exec(fmt::format(std::string({
 #include "sql/create_as_outage_table.sql.inc"
                         }),
-                        as_outage_table_name_));
-  work.commit();
+                        this->as_outage_table_name_));
+  std::cout << "Created AS outage table: " << this->as_outage_table_name_
+            << std::endl;
 
   work.exec(fmt::format(std::string({
 #include "sql/create_country_outage_table.sql.inc"
                         }),
-                        country_outage_table_name_));
+                        this->country_outage_table_name_));
+  std::cout << "Created country outage table: "
+            << this->country_outage_table_name_ << std::endl;
   work.commit();
 }
 

@@ -1,4 +1,4 @@
-CREATE TABLE if not exists `{}` (
+CREATE TABLE if not exists {} (
     asn text,
     outage_id int,
     s_time timestamp(0) without time zone not NULL,

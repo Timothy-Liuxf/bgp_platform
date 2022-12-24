@@ -1,4 +1,4 @@
-CREATE TABLE if not exists `{}` (
+CREATE TABLE if not exists {} (
     country varchar(100),
     outage_id int,
     country_chinese_name text,

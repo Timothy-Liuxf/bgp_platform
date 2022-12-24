@@ -30,6 +30,7 @@ struct PrefixOutageEvent {
     TimePoint          end_time;
     Duration           duration;
     std::vector<AsNum> pre_vp_path;
+    std::vector<AsNum> eve_vp_path;
     std::string        outage_level;
     std::string        outage_level_description;
   } value;

@@ -1,4 +1,4 @@
-CREATE TABLE if not exists `{}` (
+CREATE TABLE if not exists {} (
     prefix varchar(60),
     outage_id int,
     asn text,
