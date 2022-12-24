@@ -1,0 +1,12 @@
+# Ignore everything
+*
+
+# Ignore lists
+!.gitignore
+
+# Except SQL files
+!*.sql
+
+# Except Makefiles
+!Makefile.am
+!Makefile.inc.am
