@@ -1,0 +1,14 @@
+{
+    "data-path": {
+        "as-dict": "info/new_as_dict.json",
+        "top-nx": "info/top_nx.csv",
+        "top-ip": "info/top_ip.txt"
+    },
+    "database": {
+        "host": "localhost",
+        "port": "5432",
+        "user": "testuser",
+        "password": "testpasswd",
+        "database": "testdb"
+    }
+}

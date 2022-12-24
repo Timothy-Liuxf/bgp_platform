@@ -1,0 +1,5 @@
+# Ignore all files in the root directory but not in subdirectories
+/*
+!*/
+!.gitignore
+!Makefile.inc.am
