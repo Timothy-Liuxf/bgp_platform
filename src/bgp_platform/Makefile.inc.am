@@ -10,7 +10,6 @@ build_bin_bgp_platform_LDADD =                                                 \
     build/lib/libdatabase.a                                                    \
     -lstdc++fs                                                                 \
     -Lthird_party/inotify-cpp/build/src -linotify-cpp                          \
-    -lpq -lpqxx                                                                \
     ${NOTHING}
 
 build_bin_bgp_platform_LDFLAGS =                                               \
