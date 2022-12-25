@@ -186,13 +186,14 @@ void Detector::DetectOutage(DumpedFile update_file) {
       auto flag      = fields[2];
       auto vp_num =
           AsNum(StringToNumber<std::underlying_type_t<AsNum>>(fields[4]));
-      auto prefix = StringToIPPrefix(fields[5]);
-      auto time_string =
-          fmt::format("{:%Y-%m-%d %H:%M:%S}",
-                      fmt::gmtime(std::chrono::system_clock::to_time_t(
-                          TimpStampToTimePoint(timestamp))));
 
       if (flag == "W"sv) {
+        auto prefix = StringToIPPrefix(fields[5]);
+        auto time_string =
+            fmt::format("{:%Y-%m-%d %H:%M:%S}",
+                        fmt::gmtime(std::chrono::system_clock::to_time_t(
+                            TimpStampToTimePoint(timestamp))));
+
         if (auto prefix_info_itr =
                 this->route_info_.prefix_route_info_.find(prefix);
             prefix_info_itr != end(this->route_info_.prefix_route_info_)) {
@@ -231,6 +232,7 @@ void Detector::DetectOutage(DumpedFile update_file) {
       }
     } catch (std::exception& e) {
       std::cout << "[WARNING] Failed to parse line: " << line.num << '\n';
+      std::cout << "- Content: " << line.buf << std::endl;
       std::cout << "- Exception: " << e.what() << std::endl;
       continue;
     }
