@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <chrono>
-#include <exception>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -14,6 +13,7 @@
 
 #include <bgp_platform/common/types.hpp>
 #include <bgp_platform/utils/clock.hpp>
+#include <bgp_platform/utils/defs.hpp>
 #include <bgp_platform/utils/ip.hpp>
 #include <bgp_platform/utils/strconv.hpp>
 
@@ -94,12 +94,37 @@ void Detector::ReadRibFile(fs::path file_path) {
       auto               as_path_str = SplitString(fields[6], ' ');
       std::vector<AsNum> as_path;
       as_path.reserve(as_path_str.size());
-      std::transform(
-          begin(as_path_str), end(as_path_str), back_inserter(as_path),
-          [](const std::string_view& as_num_str) {
-            return AsNum(
-                StringToNumber<std::underlying_type_t<AsNum>>(as_num_str));
-          });
+
+      // Aggregated AS: {as1, as2}
+      BGP_PLATFORM_IF_UNLIKELY(as_path_str.back().front() == '{') {
+        BGP_PLATFORM_IF_UNLIKELY(as_path_str.back().back() != '}') {
+          throw std::runtime_error("Invalid AS path!");
+        }
+        std::transform(
+            begin(as_path_str), end(as_path_str) - 1, back_inserter(as_path),
+            [](const std::string_view& as_num_str) {
+              return AsNum(
+                  StringToNumber<std::underlying_type_t<AsNum>>(as_num_str));
+            });
+
+        auto aggregated_as_str = SplitString(
+            as_path_str.back().substr(1, as_path_str.back().size() - 2), ',');
+        if (aggregated_as_str.size() > 1) {
+          throw std::logic_error(
+              "Multiple aggregated AS has not been implemented!");
+        }
+        as_path.push_back(AsNum(StringToNumber<std::underlying_type_t<AsNum>>(
+            aggregated_as_str[0])));
+      }
+      else {
+        std::transform(
+            begin(as_path_str), end(as_path_str), back_inserter(as_path),
+            [](const std::string_view& as_num_str) {
+              return AsNum(
+                  StringToNumber<std::underlying_type_t<AsNum>>(as_num_str));
+            });
+      }
+
       auto vp_num = as_path[0];
       auto as_num = as_path.back();
 
@@ -129,6 +154,7 @@ void Detector::ReadRibFile(fs::path file_path) {
       // TODO: Build IP Prefix Tree
     } catch (std::exception& e) {
       std::cout << "[WARNING] Failed to parse line: " << line.num << '\n';
+      std::cout << "- Content: " << line.buf << std::endl;
       std::cout << "- Exception: " << e.what() << std::endl;
       continue;
     }

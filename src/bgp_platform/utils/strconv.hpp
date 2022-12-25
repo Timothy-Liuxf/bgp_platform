@@ -33,7 +33,6 @@ template <typename Number>
   Number result;
   auto [ptr, ec] =
       std::from_chars(str.data(), str.data() + str.size(), result, base);
-  (void)ptr;
   if (ec != std::errc() || ptr != str.data() + str.size()) {
     throw std::invalid_argument("File to convert string to number!");
   }
@@ -42,6 +41,11 @@ template <typename Number>
 
 [[nodiscard]] inline bool StartsWith(std::string_view str,
                                      std::string_view prefix) {
+  return str.substr(0, prefix.size()) == prefix;
+}
+
+[[nodiscard]] inline bool EndsWith(std::string_view str,
+                                   std::string_view prefix) {
   return str.substr(0, prefix.size()) == prefix;
 }
 

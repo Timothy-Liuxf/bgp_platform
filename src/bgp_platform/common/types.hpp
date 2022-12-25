@@ -15,7 +15,7 @@ struct Line {
   std::size_t num = 1;
 };
 
-enum class AsNum : std::uint16_t {};
+enum class AsNum : std::uint32_t {};
 enum class ID : std::uint64_t {};
 using Country = std::string;
 
