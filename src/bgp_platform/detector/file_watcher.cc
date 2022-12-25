@@ -5,7 +5,7 @@
 BGP_PLATFORM_NAMESPACE_BEGIN
 
 FileWatcher::FileWatcher(fs::path watch_path) {
-  this->watch_thread_ = std::make_unique<std::thread>([&, this]() {
+  this->watch_thread_ = std::make_unique<std::thread>([watch_path, this]() {
     auto events             = {inotify::Event::close_write};
     auto handleNotification = [this](inotify::Notification notification) {
       this->new_files_queue_.emplace(notification.path);
