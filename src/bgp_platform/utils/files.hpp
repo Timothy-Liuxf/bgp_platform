@@ -2,7 +2,6 @@
 #define BGP_PLATFORM_UTILS_FILES_HPP_
 
 #include <filesystem>
-#include <iostream>
 #include <memory>
 #include <sstream>
 #include <stdexcept>
@@ -11,6 +10,7 @@
 #include <vector>
 
 #include <bgp_platform/utils/defs.hpp>
+#include <bgp_platform/utils/logger.hpp>
 
 BGP_PLATFORM_NAMESPACE_BEGIN
 
@@ -48,8 +48,8 @@ class DumpedFile {
       }
     } catch (std::exception& e) {
       try {
-        std::cerr << "Failed to remove file: " << this->path_.c_str()
-                  << ", reason: " << e.what() << std::endl;
+        logger.Error("Failed to remove file: ", this->path_.c_str(),
+                     ", reason: ", e.what());
       } catch (...) {
         // ignore
       }
@@ -67,8 +67,7 @@ class DumpedFile {
 [[nodiscard]] inline DumpedFile DumpBGPFile(fs::path path) {
   fs::path temp_path =
       fs::temp_directory_path() / path.filename().concat(".dmp");
-  std::cout << "Dumping file: " << path.c_str() << " to " << temp_path.c_str()
-            << std::endl;
+  logger.Info("Dumping file: ", path.c_str(), " to ", temp_path.c_str());
   std::ostringstream cmd;
   cmd << "bgpdump -m " << path << " > " << temp_path;
   int ret = std::system(cmd.str().c_str());

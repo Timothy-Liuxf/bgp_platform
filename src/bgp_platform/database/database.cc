@@ -1,12 +1,12 @@
 #include "database.hpp"
 
-#include <iostream>
 #include <type_traits>
 
 #include <fmt/chrono.h>
 #include <fmt/std.h>
 
 #include <bgp_platform/utils/ip.hpp>
+#include <bgp_platform/utils/logger.hpp>
 
 BGP_PLATFORM_NAMESPACE_BEGIN
 
@@ -39,22 +39,21 @@ void Database::CreateTable() {
 #include "sql/create_prefix_outage_table.sql.inc"
                         }),
                         this->prefix_outage_table_name_));
-  std::cout << "Created prefix outage table: "
-            << this->prefix_outage_table_name_ << std::endl;
+  logger.Info() << "Created prefix outage table: "
+                << this->prefix_outage_table_name_;
 
   work.exec(fmt::format(std::string({
 #include "sql/create_as_outage_table.sql.inc"
                         }),
                         this->as_outage_table_name_));
-  std::cout << "Created AS outage table: " << this->as_outage_table_name_
-            << std::endl;
+  logger.Info() << "Created AS outage table: " << this->as_outage_table_name_;
 
   work.exec(fmt::format(std::string({
 #include "sql/create_country_outage_table.sql.inc"
                         }),
                         this->country_outage_table_name_));
-  std::cout << "Created country outage table: "
-            << this->country_outage_table_name_ << std::endl;
+  logger.Info() << "Created country outage table: "
+                << this->country_outage_table_name_;
   work.commit();
 }
 

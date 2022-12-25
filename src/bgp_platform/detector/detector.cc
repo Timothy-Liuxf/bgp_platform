@@ -15,6 +15,7 @@
 #include <bgp_platform/utils/clock.hpp>
 #include <bgp_platform/utils/defs.hpp>
 #include <bgp_platform/utils/ip.hpp>
+#include <bgp_platform/utils/logger.hpp>
 #include <bgp_platform/utils/strconv.hpp>
 
 #include "file_watcher.hpp"
@@ -46,7 +47,7 @@ void Detector::Detect(fs::path route_data_path) {
         [](const fs::path& path1, const fs::path& path2) {
           return path1.filename().string() < path2.filename().string();
         });
-    std::cout << "Found bview file: " << latest_rib_file->c_str() << std::endl;
+    logger.Info("Found bview file: ", latest_rib_file->c_str());
     this->ReadRibFile(*latest_rib_file);
     break;
   } while (true);
@@ -54,25 +55,24 @@ void Detector::Detect(fs::path route_data_path) {
   FileWatcher watcher(route_data_path);
   while (true) {
     fs::path new_file = watcher.WaitForNewFile();
-    std::cout << "New file: " << new_file.c_str() << std::endl;
+    logger.Info("New file: ", new_file.c_str());
     if (!StartsWith(new_file.filename().string(), "update"sv)) {
       continue;
     }
-    std::cout << "New update file: " << new_file.c_str() << std::endl;
+    logger.Info("New update file: ", new_file.c_str());
 
     try {
       // TODO: Update table name
       this->ReadUpdateFile(new_file);
     } catch (std::exception& e) {
-      std::cerr << "[ERROR] Failed to process update file: " << e.what()
-                << std::endl;
+      logger.Error("Failed to process update file: ", e.what());
     }
   }
 }
 
 void Detector::ReadRibFile(fs::path file_path) {
   DumpedFile dumped_file = DumpBGPFile(file_path);
-  std::cout << "Dumped file: " << dumped_file.path().c_str() << std::endl;
+  logger.Info("Dumped file: ", dumped_file.path().c_str());
   std::ifstream file(dumped_file.path(), std::ios::in);
   if (!file) {
     throw std::runtime_error("Failed to open dumped file!");
@@ -84,8 +84,8 @@ void Detector::ReadRibFile(fs::path file_path) {
     try {
       auto fields = SplitString(line.buf, '|');
       if (fields.size() < 7) {
-        std::cout << "[WARNING] Failed to parse line: " << line.num
-                  << std::endl;
+        logger.Warn() << "Failed to parse line: " << line.num
+                      << "\n- Content: " << line.buf;
         continue;
       }
 
@@ -153,9 +153,9 @@ void Detector::ReadRibFile(fs::path file_path) {
 
       // TODO: Build IP Prefix Tree
     } catch (std::exception& e) {
-      std::cout << "[WARNING] Failed to parse line: " << line.num << '\n';
-      std::cout << "- Content: " << line.buf << std::endl;
-      std::cout << "- Exception: " << e.what() << std::endl;
+      logger.Warn() << "Failed to parse line: " << line.num
+                    << "\n- Content: " << line.buf
+                    << "\n- Exception: " << e.what();
       continue;
     }
   }
@@ -166,11 +166,11 @@ void Detector::ReadRibFile(fs::path file_path) {
 }
 
 void Detector::ReadUpdateFile(fs::path file_path) {
-  std::cout << "Start to read update file: " << file_path.c_str() << std::endl;
+  logger.Info() << "Start to read update file: " << file_path.c_str();
   DumpedFile dumped_file = DumpBGPFile(file_path);
-  std::cout << "Dumped file: " << dumped_file.path().c_str() << std::endl;
+  logger.Info() << "Dumped file: " << dumped_file.path().c_str();
   this->DetectOutage(std::move(dumped_file));
-  std::cout << "Finished to detect outage" << std::endl;
+  logger.Info() << "Finished to detect outage";
 }
 
 void Detector::DetectOutage(DumpedFile update_file) {
@@ -231,9 +231,9 @@ void Detector::DetectOutage(DumpedFile update_file) {
         }
       }
     } catch (std::exception& e) {
-      std::cout << "[WARNING] Failed to parse line: " << line.num << '\n';
-      std::cout << "- Content: " << line.buf << std::endl;
-      std::cout << "- Exception: " << e.what() << std::endl;
+      logger.Warn() << "Failed to parse line: " << line.num
+                    << "\n- Content: " << line.buf
+                    << "\n- Exception: " << e.what();
       continue;
     }
   }

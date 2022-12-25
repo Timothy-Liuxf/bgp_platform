@@ -5,4 +5,5 @@ noinst_HEADERS +=                                                              \
     %reldir%/strconv.hpp                                                       \
     %reldir%/clock.hpp                                                         \
     %reldir%/ip.hpp                                                            \
+    %reldir%/logger.hpp                                                        \
     ${NOTHING}

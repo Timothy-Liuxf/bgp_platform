@@ -4,6 +4,8 @@
 #include <iostream>
 #include <string>
 
+#include <bgp_platform/utils/logger.hpp>
+
 #include <jsoncons/json.hpp>
 
 using namespace jsoncons;
@@ -21,14 +23,14 @@ InitInfo::InitInfo(fs::path as_info_path, fs::path top_nx_path,
       throw std::runtime_error("Cannot open as info file!");
     }
 
-    std::cout << "Reading as info file..." << std::endl;
+    logger.Info("Reading as info file...");
     auto as_info_json = jsoncons::json::parse(as_info_file);
     for (const auto& as_info : as_info_json.object_range()) {
       auto as_num       = static_cast<AsNum>(std::stoi(as_info.key()));
       auto as_info_data = as_info.value().as<AsInitInfo>();
       this->as_info_.emplace(as_num, as_info_data);
     }
-    std::cout << "Done!" << std::endl;
+    logger.Info("Done!");
   }
   {
     std::ifstream top_ip_file(top_ip_path, std::ios::in);
@@ -44,7 +46,7 @@ InitInfo::InitInfo(fs::path as_info_path, fs::path top_nx_path,
     // TODO: Read top nx
     (void)top_nx_path;
   }
-  std::cout << "Successfully to read init info!" << std::endl;
+  logger.Info("Successfully to read init info!");
   return;
 }
 
