@@ -1,9 +1,10 @@
 {
-    "data-path": {
+    "init-data-path": {
         "as-dict": "info/new_as_dict.json",
         "top-nx": "info/top_nx.csv",
         "top-ip": "info/top_ip.txt"
     },
+    "route-data-path": "~/data",
     "database": {
         "host": "localhost",
         "port": "5432",

@@ -71,7 +71,7 @@ void Database::InsertPrefixOutageEvent(const models::PrefixOutageEvent& event) {
       "as_name"_a = event.value.as_name, "org_name"_a = event.value.org_name,
       "as_type"_a = event.value.as_type,
       "s_time"_a  = fmt::gmtime(
-          std::chrono::system_clock::to_time_t(event.value.start_time)),
+           std::chrono::system_clock::to_time_t(event.value.start_time)),
       "e_time"_a = fmt::gmtime(
           std::chrono::system_clock::to_time_t(event.value.end_time)),
       "duration"_a =

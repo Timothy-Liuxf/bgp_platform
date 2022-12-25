@@ -21,17 +21,17 @@ int main() {
   auto config = json::parse(config_file);
   config_file.close();
 
-  const json& data_path = config["data-path"];
-  const json& db_config = config["database"];
+  const json& init_data_path = config["init-data-path"];
+  const json& db_config      = config["database"];
 
   Detector    detector(
-         {data_path["as-dict"].as_string_view(),
-          data_path["top-nx"].as_string_view(),
-          data_path["top-ip"].as_string_view()},
+         {init_data_path["as-dict"].as_string_view(),
+          init_data_path["top-nx"].as_string_view(),
+          init_data_path["top-ip"].as_string_view()},
          {db_config["host"].as_string_view(), db_config["port"].as_string_view(),
           db_config["user"].as_string_view(),
           db_config["password"].as_string_view(),
           db_config["database"].as_string_view()});
-  detector.Detect("build");
+  detector.Detect(config["route-data-path"].as_string_view());
   return 0;
 }
