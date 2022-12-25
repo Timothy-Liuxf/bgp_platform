@@ -16,14 +16,14 @@ namespace details {
 
 using namespace std::literals::string_view_literals;
 
-static const inline std::string_view kBeginRed    = "\033[31m"sv;
-static const inline std::string_view kEndRed      = "\033[0m"sv;
-static const inline std::string_view kBeginGreen  = "\033[32m"sv;
-static const inline std::string_view kEndGreen    = "\033[0m"sv;
-static const inline std::string_view kBeginYellow = "\033[33m"sv;
-static const inline std::string_view kEndYellow   = "\033[0m"sv;
-static const inline std::string_view kBeginBlue   = "\033[34m"sv;
-static const inline std::string_view kEndBlue     = "\033[0m"sv;
+static constexpr inline std::string_view kBeginRed    = "\033[31m"sv;
+static constexpr inline std::string_view kEndRed      = "\033[0m"sv;
+static constexpr inline std::string_view kBeginGreen  = "\033[32m"sv;
+static constexpr inline std::string_view kEndGreen    = "\033[0m"sv;
+static constexpr inline std::string_view kBeginYellow = "\033[33m"sv;
+static constexpr inline std::string_view kEndYellow   = "\033[0m"sv;
+static constexpr inline std::string_view kBeginBlue   = "\033[34m"sv;
+static constexpr inline std::string_view kEndBlue     = "\033[0m"sv;
 
 }  // namespace details
 
