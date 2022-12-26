@@ -34,7 +34,17 @@ template <typename Number>
   auto [ptr, ec] =
       std::from_chars(str.data(), str.data() + str.size(), result, base);
   if (ec != std::errc() || ptr != str.data() + str.size()) {
-    throw std::invalid_argument("File to convert string to number!");
+    switch (ec) {
+      case std::errc::invalid_argument:
+        throw std::invalid_argument(
+            "Failed to convert string to number: invalid rgument!");
+      case std::errc::result_out_of_range:
+        throw std::invalid_argument(
+            "Failed to convert string to number: result out of range!");
+      default:
+        throw std::invalid_argument(
+            "Failed to convert string to number: not all characters matched!");
+    }
   }
   return result;
 }
