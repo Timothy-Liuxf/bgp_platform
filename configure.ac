@@ -29,11 +29,11 @@ AS_CASE([X$BUILD_CONFIG],
 
 AX_APPEND_COMPILE_FLAGS([-Wall -Wpedantic -Wextra -Werror], [CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS([-pthread], [CXXFLAGS])
-AX_APPEND_COMPILE_FLAGS([ dnl
-    -Isrc dnl
-    -Ithird_party/jsoncons/include dnl
-    -Ithird_party/inotify-cpp/src/include dnl
-    -Ithird_party/fmt/include -DFMT_HEADER_ONLY dnl
+AX_APPEND_COMPILE_FLAGS([                                                              dnl
+    -Isrc                                                                              dnl
+    -Ithird_party/jsoncons/include                                                     dnl
+    -Ithird_party/inotify-cpp/src/include                                              dnl
+    -Ithird_party/fmt/include -DFMT_HEADER_ONLY                                        dnl
 ], [CXXFLAGS])
 
 # Checks for programs.
