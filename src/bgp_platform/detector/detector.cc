@@ -140,10 +140,15 @@ void Detector::ReadRibFile(fs::path file_path) {
       auto& as_route_info  = this->route_info_.as_route_info_[as_num];
       auto& as_prefix_info = as_route_info.prefixes[prefix];
       as_prefix_info.reachable_vps.insert(vp_num);
-      as_prefix_info.vp_paths[vp_num] = std::move(as_path);
+      auto& vp_path_info = as_prefix_info.vp_paths[vp_num];
+      if (vp_path_info.empty()) {
+        vp_path_info = std::move(as_path);
+      } else {
+        vp_path_info.insert(end(vp_path_info), begin(as_path), end(as_path));
+      }
 
       // Record country information
-      auto coutry                     = this->init_info_.GetAsCountry(as_num);
+      auto coutry = this->init_info_.GetAsCountry(as_num);
       if (!coutry.empty()) {
         this->route_info_.country_route_info_[coutry].normal_ass.insert(as_num);
       }
