@@ -10,6 +10,26 @@
 #include <bgp_platform/utils/clock.hpp>
 #include <bgp_platform/utils/defs.hpp>
 
+#define BGP_PLATFORM_LOG_NONE  0
+#define BGP_PLATFORM_LOG_ERROR 1
+#define BGP_PLATFORM_LOG_WARN  2
+#define BGP_PLATFORM_LOG_INFO  3
+#define BGP_PLATFORM_LOG_DEBUG 4
+
+#if defined(BGP_PLATFORM_DISABLE_LOG)
+#define BGP_PLATFORM_LOG_LEVEL BGP_PLATFORM_LOG_NONE
+#elif defined(BGP_PLATFORM_ENABLE_LOG_DEBUG)
+#define BGP_PLATFORM_LOG_LEVEL BGP_PLATFORM_LOG_DEBUG
+#elif defined(BGP_PLATFORM_ENABLE_LOG_INFO)
+#define BGP_PLATFORM_LOG_LEVEL BGP_PLATFORM_LOG_INFO
+#elif defined(BGP_PLATFORM_ENABLE_LOG_WARN)
+#define BGP_PLATFORM_LOG_LEVEL BGP_PLATFORM_LOG_WARN
+#elif defined(BGP_PLATFORM_ENABLE_LOG_ERROR)
+#define BGP_PLATFORM_LOG_LEVEL BGP_PLATFORM_LOG_ERROR
+#else
+#define BGP_PLATFORM_LOG_LEVEL BGP_PLATFORM_LOG_INFO
+#endif
+
 BGP_PLATFORM_NAMESPACE_BEGIN
 
 namespace details {
@@ -60,13 +80,29 @@ class Logger {
     friend class Logger;
   };
 
+  class EmptyLogHelper {
+   public:
+    template <typename Val>
+    EmptyLogHelper& operator<<(Val&&) {
+      return *this;
+    }
+
+    EmptyLogHelper& operator<<(std::ostream& (*)(std::ostream&)) {
+      return *this;
+    }
+  };
+
  public:
+#if BGP_PLATFORM_LOG_LEVEL >= BGP_PLATFORM_LOG_DEBUG
   LogHelper Debug() {
     std::cout << details::kBeginGreen;
     Logger::PrintTime(std::cout);
     std::cout << "[debug] ";
     return LogHelper(std::cout, details::kEndGreen);
   }
+#else
+  EmptyLogHelper Debug() { return EmptyLogHelper(); }
+#endif  // BGP_PLATFORM_LOG_LEVEL >= BGP_PLATFORM_LOG_DEBUG
 
   template <typename... Vals>
   void Debug(Vals&&... vals) {
@@ -79,11 +115,15 @@ class Logger {
                                  std::forward<Args>(args)...);
   }
 
+#if BGP_PLATFORM_LOG_LEVEL >= BGP_PLATFORM_LOG_INFO
   LogHelper Info() {
     Logger::PrintTime(std::cout);
     std::cout << "[info] ";
     return LogHelper(std::cout, {});
   }
+#else
+  EmptyLogHelper Info() { return EmptyLogHelper(); }
+#endif  // BGP_PLATFORM_LOG_LEVEL >= BGP_PLATFORM_LOG_INFO
 
   template <typename... Vals>
   void Info(Vals&&... vals) {
@@ -96,12 +136,16 @@ class Logger {
                                 std::forward<Args>(args)...);
   }
 
+#if BGP_PLATFORM_LOG_LEVEL >= BGP_PLATFORM_LOG_WARN
   LogHelper Warn() {
     std::cerr << details::kBeginYellow;
     Logger::PrintTime(std::cerr);
     std::cerr << "[warn] ";
     return LogHelper(std::cerr, details::kEndYellow);
   }
+#else
+  EmptyLogHelper Warn() { return EmptyLogHelper(); }
+#endif  // BGP_PLATFORM_LOG_LEVEL >= BGP_PLATFORM_LOG_WARN
 
   template <typename... Vals>
   void Warn(Vals&&... vals) {
@@ -114,12 +158,16 @@ class Logger {
                                 std::forward<Args>(args)...);
   }
 
+#if BGP_PLATFORM_LOG_LEVEL >= BGP_PLATFORM_LOG_ERROR
   LogHelper Error() {
     std::cout << details::kBeginRed;
     Logger::PrintTime(std::cerr);
     std::cerr << "[error] ";
     return LogHelper(std::cerr, details::kEndRed);
   }
+#else
+  EmptyLogHelper Error() { return EmptyLogHelper(); }
+#endif  // BGP_PLATFORM_LOG_LEVEL >= BGP_PLATFORM_LOG_ERROR
 
   template <typename... Vals>
   void Error(Vals&&... vals) {

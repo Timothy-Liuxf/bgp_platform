@@ -13,8 +13,18 @@ AX_CXX_COMPILE_STDCXX_17([noext], [mandatory])
 CXXFLAGS=""
 
 AS_CASE([X$BUILD_CONFIG],
-    [XRelease|Xrelease|X], [AX_APPEND_COMPILE_FLAGS([-O2], [CXXFLAGS])],
-    [XDebug|Xdebug], [AX_APPEND_COMPILE_FLAGS([-g -Og], [CXXFLAGS])],
+    [XRelease|Xrelease|X], [
+        AX_APPEND_COMPILE_FLAGS(
+            [-O2 -DBGP_PLATFORM_ENABLE_LOG_INFO],
+            [CXXFLAGS]
+        )
+    ],
+    [XDebug|Xdebug], [
+        AX_APPEND_COMPILE_FLAGS(
+            [-g -Og -DBGP_PLATFORM_ENABLE_LOG_DEBUG],
+            [CXXFLAGS]
+        )
+    ],
     [AC_MSG_ERROR([Unknown build configuration: $BUILD_CONFIG!])])
 
 AX_APPEND_COMPILE_FLAGS([-Wall -Wpedantic -Wextra -Werror], [CXXFLAGS])
