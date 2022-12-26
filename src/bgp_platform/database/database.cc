@@ -80,7 +80,7 @@ void Database::InsertPrefixOutageEvent(const models::PrefixOutageEvent& event) {
       "eve_vp_paths"_a       = "{}",  // TODO: Set eve_vp_path
       "outage_level"_a       = "",    // TODO: Set outage_level
       "outage_level_descr"_a = "",    // TODO: Set outage_level_descr
-      "prefix"_a = IPPrefixToString(event.key.prefix),  // TODO: Set prefix
+      "prefix"_a             = IPPrefixToString(event.key.prefix),
       "outage_id"_a =
           static_cast<std::underlying_type_t<ID>>(event.key.outage_id)));
   work.commit();

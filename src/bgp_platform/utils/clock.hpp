@@ -48,6 +48,17 @@ struct CalendarTime {
   return ToUTCTime(TimpStampToTimePoint(timestamp));
 }
 
+[[nodiscard]] inline TimePoint ToTimePoint(CalendarTime time) {
+  std::tm tm_time {};
+  tm_time.tm_year = time.year - 1900;
+  tm_time.tm_mon  = time.month - 1;
+  tm_time.tm_mday = time.day;
+  tm_time.tm_hour = time.hour;
+  tm_time.tm_min  = time.minute;
+  tm_time.tm_sec  = time.second;
+  return std::chrono::system_clock::from_time_t(std::mktime(&tm_time));
+}
+
 struct CalendarDuration {
   int days;
   int hours;

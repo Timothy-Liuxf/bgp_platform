@@ -1,6 +1,8 @@
 #ifndef BGP_PLATFORM_DETECTOR_DETECTOR_HPP_
 #define BGP_PLATFORM_DETECTOR_DETECTOR_HPP_
 
+#include <optional>
+
 #include <bgp_platform/database/database.hpp>
 #include <bgp_platform/utils/defs.hpp>
 #include <bgp_platform/utils/files.hpp>
@@ -50,6 +52,10 @@ class Detector {
   void ReadUpdateFile(fs::path file_path);
   void DetectOutage(DumpedFile update_file);
   void CheckPrefixOutage(AsNum owner_as, IPPrefix prefix, TimeStamp timestamp);
+
+ private:
+  static std::optional<CalendarTime> GetTimeFromUpdateFileName(
+      std::string file_name);
 };
 
 BGP_PLATFORM_NAMESPACE_END

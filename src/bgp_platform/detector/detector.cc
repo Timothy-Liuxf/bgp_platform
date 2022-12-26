@@ -4,6 +4,7 @@
 #include <chrono>
 #include <fstream>
 #include <iostream>
+#include <regex>
 #include <sstream>
 #include <stdexcept>
 #include <string_view>
@@ -56,16 +57,21 @@ void Detector::Detect(fs::path route_data_path) {
   while (true) {
     fs::path new_file = watcher.WaitForNewFile();
     logger.Info("New file: ", new_file.c_str());
-    if (!StartsWith(new_file.filename().string(), "update"sv)) {
+    std::optional<CalendarTime> time =
+        GetTimeFromUpdateFileName(new_file.filename().string());
+    BGP_PLATFORM_IF_UNLIKELY(!time.has_value()) {
+      logger.Warn("Fail to parse update file name: ",
+                  new_file.filename().string());
       continue;
     }
     logger.Info("New update file: ", new_file.c_str());
 
     try {
-      // TODO: Update table name
+      this->database_.SetTableTime(ToTimePoint(*time));
       this->ReadUpdateFile(new_file);
     } catch (std::exception& e) {
-      logger.Error("Failed to process update file: ", e.what());
+      logger.Errorf("Failed to process update file {}! Exception: {}",
+                    new_file.c_str(), e.what());
     }
   }
 }
@@ -168,6 +174,26 @@ void Detector::ReadRibFile(fs::path file_path) {
   if (is_first_success_line) {
     throw std::runtime_error("Failed to parse any line of rib file");
   }
+}
+
+std::optional<CalendarTime> Detector::GetTimeFromUpdateFileName(
+    std::string file_name) {
+  std::regex  rgx(R"(updates\.(\d{8})\.(\d{4})\.gz)");
+  std::smatch res;
+  if (!std::regex_match(file_name, res, rgx)) {
+    return std::nullopt;
+  }
+
+  auto date_str = res[1].str();
+  auto time_str = res[2].str();
+  return CalendarTime {
+      StringToNumber<int>({date_str.data(), 4}),
+      StringToNumber<int>({date_str.data() + 4, 2}),
+      StringToNumber<int>({date_str.data() + 6, 2}),
+      StringToNumber<int>({time_str.data(), 2}),
+      StringToNumber<int>({time_str.data() + 2, 2}),
+      {}  // Second default to 0
+  };
 }
 
 void Detector::ReadUpdateFile(fs::path file_path) {
