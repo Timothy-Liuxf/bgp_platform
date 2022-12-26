@@ -160,7 +160,7 @@ class Logger {
 
 #if BGP_PLATFORM_LOG_LEVEL >= BGP_PLATFORM_LOG_ERROR
   LogHelper Error() {
-    std::cout << details::kBeginRed;
+    std::cerr << details::kBeginRed;
     Logger::PrintTime(std::cerr);
     std::cerr << "[error] ";
     return LogHelper(std::cerr, details::kEndRed);
