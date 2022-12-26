@@ -4,6 +4,7 @@
 AC_PREREQ([2.71])
 AC_INIT([bgp_platform], [1.0.0])
 AC_CONFIG_SRCDIR([src/bgp_platform/main.cc])
+AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIRS([m4 third_party/autoconf-archive/m4])
 AC_PROG_RANLIB
 
@@ -39,6 +40,7 @@ AX_APPEND_COMPILE_FLAGS([                                                       
 # Checks for programs.
 AC_PROG_CXX
 AC_PROG_CPP
+AC_PROG_MAKE_SET
 
 # Checks for libraries.
 AX_CHECK_LIBPQXX_VERSION
@@ -66,6 +68,7 @@ AC_CHECK_TYPES([ptrdiff_t])
 AC_FUNC_ERROR_AT_LINE
 AC_FUNC_MALLOC
 AC_FUNC_STRTOD
+AC_FUNC_MKTIME
 AC_CHECK_FUNCS([dup2 floor localeconv memmove memset pow select sqrt strtol strtoul])
 
 # Build third party libraries
