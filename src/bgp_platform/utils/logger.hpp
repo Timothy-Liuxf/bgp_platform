@@ -73,6 +73,12 @@ class Logger {
     (this->Debug() << ... << std::forward<Vals>(vals));
   }
 
+  template <typename Format, typename... Args>
+  void Debugf(Format&& fmt, Args&&... args) {
+    this->Debug() << fmt::format(std::forward<Format>(fmt),
+                                 std::forward<Args>(args)...);
+  }
+
   LogHelper Info() {
     Logger::PrintTime(std::cout);
     std::cout << "[info] ";
@@ -82,6 +88,12 @@ class Logger {
   template <typename... Vals>
   void Info(Vals&&... vals) {
     (this->Info() << ... << std::forward<Vals>(vals));
+  }
+
+  template <typename Format, typename... Args>
+  void Infof(Format&& fmt, Args&&... args) {
+    this->Info() << fmt::format(std::forward<Format>(fmt),
+                                std::forward<Args>(args)...);
   }
 
   LogHelper Warn() {
@@ -96,6 +108,12 @@ class Logger {
     (this->Warn() << ... << std::forward<Vals>(vals));
   }
 
+  template <typename Format, typename... Args>
+  void Warnf(Format&& fmt, Args&&... args) {
+    this->Warn() << fmt::format(std::forward<Format>(fmt),
+                                std::forward<Args>(args)...);
+  }
+
   LogHelper Error() {
     std::cout << details::kBeginRed;
     Logger::PrintTime(std::cerr);
@@ -106,6 +124,12 @@ class Logger {
   template <typename... Vals>
   void Error(Vals&&... vals) {
     (this->Error() << ... << std::forward<Vals>(vals));
+  }
+
+  template <typename Format, typename... Args>
+  void Errorf(Format&& fmt, Args&&... args) {
+    this->Error() << fmt::format(std::forward<Format>(fmt),
+                                 std::forward<Args>(args)...);
   }
 
  private:
