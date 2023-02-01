@@ -1,7 +1,6 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ([2.71])
 AC_INIT([bgp_platform], [1.0.0])
 AC_CONFIG_SRCDIR([src/bgp_platform/main.cc])
 AC_CONFIG_HEADERS([config.h])
