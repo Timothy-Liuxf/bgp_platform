@@ -16,13 +16,13 @@ CXXFLAGS=""
 AS_CASE([X$BUILD_CONFIG],
     [XRelease|Xrelease|X], [
         AX_APPEND_COMPILE_FLAGS(
-            [-O2 -DBGP_PLATFORM_ENABLE_LOG_INFO],
+            [-O2 -DSIMPLE_LOGGER_ENABLE_LOG_INFO],
             [CXXFLAGS]
         )
     ],
     [XDebug|Xdebug], [
         AX_APPEND_COMPILE_FLAGS(
-            [-g -Og -DBGP_PLATFORM_ENABLE_LOG_DEBUG],
+            [-g -Og -DSIMPLE_LOGGER_ENABLE_LOG_DEBUG],
             [CXXFLAGS]
         )
     ],
@@ -35,6 +35,7 @@ AX_APPEND_COMPILE_FLAGS([                                                       
     -Ithird_party/jsoncons/include                                                     dnl
     -Ithird_party/inotify-cpp/src/include                                              dnl
     -Ithird_party/fmt/include -DFMT_HEADER_ONLY                                        dnl
+    -Ithird_party/simple_logger/include                                                dnl
 ], [CXXFLAGS])
 
 # Checks for programs.
