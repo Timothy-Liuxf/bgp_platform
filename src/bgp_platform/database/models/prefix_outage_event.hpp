@@ -36,6 +36,12 @@ struct PrefixOutageEvent {
   } value;
 };
 
+[[nodiscard]] inline bool operator==(PrefixOutageEvent::Key key1,
+                                     PrefixOutageEvent::Key key2) {
+  return key1.owner_as == key2.owner_as && key1.outage_id == key2.outage_id &&
+         key1.prefix == key2.prefix;
+}
+
 }  // namespace database::models
 
 BGP_PLATFORM_NAMESPACE_END

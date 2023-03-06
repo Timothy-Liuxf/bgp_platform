@@ -18,6 +18,7 @@
 #include <bgp_platform/utils/ip.hpp>
 #include <bgp_platform/utils/logger.hpp>
 #include <bgp_platform/utils/strconv.hpp>
+#include <bgp_platform/utils/types.hpp>
 
 #include "file_watcher.hpp"
 
@@ -150,6 +151,7 @@ void Detector::ReadRibFile(fs::path file_path) {
       if (vp_path_info.empty()) {
         vp_path_info = std::move(as_path);
       } else {
+        // TODO: Question: Whether to insert back?
         vp_path_info.insert(end(vp_path_info), begin(as_path), end(as_path));
       }
 
@@ -279,6 +281,7 @@ void Detector::CheckPrefixOutage(AsNum owner_as, IPPrefix prefix,
       auto& owner_as_route_info = owner_as_route_info_itr->second;
       if (auto prefix_info_itr = owner_as_route_info.prefixes.find(prefix);
           prefix_info_itr != end(owner_as_route_info.prefixes)) {
+        auto  timepoint          = TimpStampToTimePoint(timestamp);
         auto& prefix_info        = prefix_info_itr->second;
         auto  unreachable_vp_num = prefix_info.unreachable_vps.size();
         auto  reachable_vp_num   = prefix_info.reachable_vps.size();
@@ -293,7 +296,7 @@ void Detector::CheckPrefixOutage(AsNum owner_as, IPPrefix prefix,
             // current month, reset the outage id
             if (prefix_info.last_outage_start_time != TimePoint {} &&
                 ToUTCTime(prefix_info.last_outage_start_time).month !=
-                    ToUTCTime(timestamp).month) {
+                    ToUTCTime(timepoint).month) {
               prefix_info.outage_id = {};
             }
             owner_as_route_info.normal_prefixes.erase(prefix);
@@ -313,7 +316,7 @@ void Detector::CheckPrefixOutage(AsNum owner_as, IPPrefix prefix,
                     this->init_info_.GetAsAutName(owner_as),
                     this->init_info_.GetAsOrgName(owner_as),
                     this->init_info_.GetAsType(owner_as),
-                    TimePoint(Duration(timestamp)),
+                    timepoint,
                     TimePoint {},
                     Duration {},
                     {},  // TODO: Record pre_vp_paths
@@ -321,11 +324,51 @@ void Detector::CheckPrefixOutage(AsNum owner_as, IPPrefix prefix,
                     "",  // TODO: Record outage_level
                     "",  // TODO: Record outage_level_description
                 }};
-            (void)prefix_outage_event;
+
             // TODO: Write to database
+
+            this->prefix_outage_events[prefix_outage_event.key] =
+                std::move(prefix_outage_event.value);
           }
         } else {
           // TODO: Check if the prefix is recovered
+          if (reachable_vp_num >
+              (unreachable_vp_num + reachable_vp_num) * 0.8) {
+            prefix_info.is_outage = false;
+          }
+
+          // TODO: set_pre_pre_vp_paths
+
+          owner_as_route_info.outage_prefixes.erase(prefix);
+          owner_as_route_info.normal_prefixes.insert(prefix);
+
+          // Record outage ending info
+          auto prefix_outage_id        = prefix_info.outage_id;
+          auto prefix_outage_event_itr = this->prefix_outage_events.find(
+              {owner_as, prefix, prefix_outage_id});
+          BGP_PLATFORM_IF_UNLIKELY(prefix_outage_event_itr ==
+                                   this->prefix_outage_events.end()) {
+            logger.Errorf(
+                "A prefix outage event has NOT been recorded when the outage "
+                "started: Owner AS: {}, Prefix: {}, Outage ID: {}, At: "
+                "{:%Y-%m-%d %H:%M:%S}\n",
+                ToUnderlying(owner_as), IPPrefixToString(prefix),
+                ToUnderlying(prefix_outage_id),
+                fmt::gmtime(std::chrono::system_clock::to_time_t(timepoint)));
+            return;
+          }
+          auto& prefix_outage_event          = prefix_outage_event_itr->second;
+          auto  start_time                   = prefix_outage_event.start_time;
+          prefix_outage_event.end_time       = timepoint;
+          prefix_outage_event.duration       = timepoint - start_time;
+
+          // TODO: Write to database
+
+          prefix_info.last_outage_start_time = start_time;
+
+          // TODO: Set pre_vp_paths
+
+          this->prefix_outage_events.erase(prefix_outage_event_itr);
         }
       }
     }

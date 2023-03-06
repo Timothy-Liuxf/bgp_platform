@@ -44,6 +44,10 @@ class Detector {
   RouteInfo          route_info_;
   database::Database database_;
 
+  std::unordered_map<database::models::PrefixOutageEvent::Key,
+                     database::models::PrefixOutageEvent::Value>
+      prefix_outage_events;
+
  private:
   [[nodiscard]] bool InBlackList(const IPPrefix&) const { return false; }
 
