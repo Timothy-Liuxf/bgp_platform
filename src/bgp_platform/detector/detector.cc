@@ -331,52 +331,52 @@ void Detector::CheckPrefixOutage(AsNum owner_as, IPPrefix prefix,
                                               prefix_outage_event.value)));
           }
         } else {
-          // TODO: Check if the prefix is recovered
           if (reachable_vp_num >
               (unreachable_vp_num + reachable_vp_num) * 0.8) {
             prefix_info.is_outage = false;
+
+            // TODO: set_pre_pre_vp_paths
+
+            owner_as_route_info.outage_prefixes.erase(prefix);
+            owner_as_route_info.normal_prefixes.insert(prefix);
+
+            // Record outage ending info
+            auto prefix_outage_id = prefix_info.outage_id;
+            auto prefix_outage_event_key =
+                database::models::PrefixOutageEvent::Key {owner_as, prefix,
+                                                          prefix_outage_id};
+            auto prefix_outage_event_itr =
+                this->prefix_outage_events.find(prefix_outage_event_key);
+            BGP_PLATFORM_IF_UNLIKELY(prefix_outage_event_itr ==
+                                     this->prefix_outage_events.end()) {
+              logger.Errorf(
+                  "A prefix outage event has NOT been recorded when the outage "
+                  "started: Owner AS: {}, Prefix: {}, Outage ID: {}, At: "
+                  "{:%Y-%m-%d %H:%M:%S}\n",
+                  ToUnderlying(owner_as), IPPrefixToString(prefix),
+                  ToUnderlying(prefix_outage_id),
+                  fmt::gmtime(std::chrono::system_clock::to_time_t(timepoint)));
+              return;
+            }
+            auto& [table_name, prefix_outage_event_value] =
+                prefix_outage_event_itr->second;
+            auto start_time = prefix_outage_event_value.start_time;
+            prefix_outage_event_value.end_time = timepoint;
+            prefix_outage_event_value.duration = timepoint - start_time;
+
+            // TODO: Write to database
+            if (this->database_.TableExists(table_name)) {
+              this->database_.PrefixOutageEnd(table_name,
+                                              prefix_outage_event_key,
+                                              prefix_outage_event_value);
+            }
+
+            prefix_info.last_outage_start_time = start_time;
+
+            // TODO: Set pre_vp_paths
+
+            this->prefix_outage_events.erase(prefix_outage_event_itr);
           }
-
-          // TODO: set_pre_pre_vp_paths
-
-          owner_as_route_info.outage_prefixes.erase(prefix);
-          owner_as_route_info.normal_prefixes.insert(prefix);
-
-          // Record outage ending info
-          auto prefix_outage_id = prefix_info.outage_id;
-          auto prefix_outage_event_key =
-              database::models::PrefixOutageEvent::Key {owner_as, prefix,
-                                                        prefix_outage_id};
-          auto prefix_outage_event_itr =
-              this->prefix_outage_events.find(prefix_outage_event_key);
-          BGP_PLATFORM_IF_UNLIKELY(prefix_outage_event_itr ==
-                                   this->prefix_outage_events.end()) {
-            logger.Errorf(
-                "A prefix outage event has NOT been recorded when the outage "
-                "started: Owner AS: {}, Prefix: {}, Outage ID: {}, At: "
-                "{:%Y-%m-%d %H:%M:%S}\n",
-                ToUnderlying(owner_as), IPPrefixToString(prefix),
-                ToUnderlying(prefix_outage_id),
-                fmt::gmtime(std::chrono::system_clock::to_time_t(timepoint)));
-            return;
-          }
-          auto& [table_name, prefix_outage_event_value] =
-              prefix_outage_event_itr->second;
-          auto start_time = prefix_outage_event_value.start_time;
-          prefix_outage_event_value.end_time = timepoint;
-          prefix_outage_event_value.duration = timepoint - start_time;
-
-          // TODO: Write to database
-          if (this->database_.TableExists(table_name)) {
-            this->database_.PrefixOutageEnd(table_name, prefix_outage_event_key,
-                                            prefix_outage_event_value);
-          }
-
-          prefix_info.last_outage_start_time = start_time;
-
-          // TODO: Set pre_vp_paths
-
-          this->prefix_outage_events.erase(prefix_outage_event_itr);
         }
       }
     }
