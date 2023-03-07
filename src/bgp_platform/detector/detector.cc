@@ -311,7 +311,6 @@ void Detector::CheckPrefixOutage(AsNum owner_as, IPPrefix prefix,
                     prefix_outage_id,
                 },
                 {
-                    "",  // TODO: Get the name of the table
                     this->init_info_.GetAsCountry(owner_as),
                     this->init_info_.GetAsAutName(owner_as),
                     this->init_info_.GetAsOrgName(owner_as),
@@ -324,11 +323,12 @@ void Detector::CheckPrefixOutage(AsNum owner_as, IPPrefix prefix,
                     "",  // TODO: Record outage_level
                     "",  // TODO: Record outage_level_description
                 }};
-
-            // TODO: Write to database
-
-            this->prefix_outage_events[prefix_outage_event.key] =
-                std::move(prefix_outage_event.value);
+            auto table_name = this->database_.InsertPrefixOutageEvent(
+                prefix_outage_event);  // Write to database
+            this->prefix_outage_events.emplace(
+                std::make_pair(std::move(prefix_outage_event.key),
+                               std::make_pair(std::move(table_name),
+                                              prefix_outage_event.value)));
           }
         } else {
           // TODO: Check if the prefix is recovered
@@ -343,9 +343,12 @@ void Detector::CheckPrefixOutage(AsNum owner_as, IPPrefix prefix,
           owner_as_route_info.normal_prefixes.insert(prefix);
 
           // Record outage ending info
-          auto prefix_outage_id        = prefix_info.outage_id;
-          auto prefix_outage_event_itr = this->prefix_outage_events.find(
-              {owner_as, prefix, prefix_outage_id});
+          auto prefix_outage_id = prefix_info.outage_id;
+          auto prefix_outage_event_key =
+              database::models::PrefixOutageEvent::Key {owner_as, prefix,
+                                                        prefix_outage_id};
+          auto prefix_outage_event_itr =
+              this->prefix_outage_events.find(prefix_outage_event_key);
           BGP_PLATFORM_IF_UNLIKELY(prefix_outage_event_itr ==
                                    this->prefix_outage_events.end()) {
             logger.Errorf(
@@ -357,12 +360,17 @@ void Detector::CheckPrefixOutage(AsNum owner_as, IPPrefix prefix,
                 fmt::gmtime(std::chrono::system_clock::to_time_t(timepoint)));
             return;
           }
-          auto& prefix_outage_event          = prefix_outage_event_itr->second;
-          auto  start_time                   = prefix_outage_event.start_time;
-          prefix_outage_event.end_time       = timepoint;
-          prefix_outage_event.duration       = timepoint - start_time;
+          auto& [table_name, prefix_outage_event_value] =
+              prefix_outage_event_itr->second;
+          auto start_time = prefix_outage_event_value.start_time;
+          prefix_outage_event_value.end_time = timepoint;
+          prefix_outage_event_value.duration = timepoint - start_time;
 
           // TODO: Write to database
+          if (this->database_.TableExists(table_name)) {
+            this->database_.PrefixOutageEnd(table_name, prefix_outage_event_key,
+                                            prefix_outage_event_value);
+          }
 
           prefix_info.last_outage_start_time = start_time;
 

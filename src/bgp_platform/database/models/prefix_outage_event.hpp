@@ -21,7 +21,6 @@ struct PrefixOutageEvent {
   } key;
 
   struct Value {
-    std::string        table_name;
     Country            country;
     std::string        as_name;
     std::string        org_name;

@@ -2,6 +2,8 @@
 #define BGP_PLATFORM_DETECTOR_DETECTOR_HPP_
 
 #include <optional>
+#include <unordered_map>
+#include <utility>
 
 #include <bgp_platform/database/database.hpp>
 #include <bgp_platform/utils/defs.hpp>
@@ -44,8 +46,9 @@ class Detector {
   RouteInfo          route_info_;
   database::Database database_;
 
-  std::unordered_map<database::models::PrefixOutageEvent::Key,
-                     database::models::PrefixOutageEvent::Value>
+  std::unordered_map<
+      database::models::PrefixOutageEvent::Key,
+      std::pair<std::string, database::models::PrefixOutageEvent::Value>>
       prefix_outage_events;
 
  private:

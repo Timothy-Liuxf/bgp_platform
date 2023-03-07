@@ -1,8 +1,10 @@
 SQL_FILES =                                                                    \
+    %reldir%/count_tables.sql                                                  \
     %reldir%/create_prefix_outage_table.sql                                    \
     %reldir%/create_as_outage_table.sql                                        \
     %reldir%/create_country_outage_table.sql                                   \
     %reldir%/insert_prefix_outage_event.sql                                    \
+    %reldir%/update_prefix_outage_end.sql                                      \
     ${NOTHING}
 
 SQL_GENERATED_FILES = $(patsubst %,%.inc,$(SQL_FILES))

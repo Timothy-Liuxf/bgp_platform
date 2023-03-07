@@ -21,9 +21,13 @@ class Database {
   Database(std::string_view host, std::string_view port, std::string_view user,
            std::string_view password, std::string_view database);
 
-  void      SetTableTime(TimePoint table_time);
-  TimePoint GetTableTime() const { return this->table_time_; }
-  void      InsertPrefixOutageEvent(const models::PrefixOutageEvent& event);
+  void        SetTableTime(TimePoint table_time);
+  TimePoint   GetTableTime() const { return this->table_time_; }
+  std::string InsertPrefixOutageEvent(const models::PrefixOutageEvent& event);
+  void        PrefixOutageEnd(std::string_view                        table_name,
+                              const models::PrefixOutageEvent::Key&   event_key,
+                              const models::PrefixOutageEvent::Value& event_value);
+  bool        TableExists(std::string_view table_name);
 
  private:
   Connector   connector_;
