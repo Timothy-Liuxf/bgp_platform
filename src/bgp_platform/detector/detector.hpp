@@ -10,6 +10,7 @@
 #include <bgp_platform/utils/files.hpp>
 
 #include "init_info.hpp"
+#include "outage_event.hpp"
 #include "route_info.hpp"
 
 BGP_PLATFORM_NAMESPACE_BEGIN
@@ -45,11 +46,7 @@ class Detector {
   InitInfo           init_info_;
   RouteInfo          route_info_;
   database::Database database_;
-
-  std::unordered_map<
-      database::models::PrefixOutageEvent::Key,
-      std::pair<std::string, database::models::PrefixOutageEvent::Value>>
-      prefix_outage_events;
+  OutageEvent        outage_events_;
 
  private:
   [[nodiscard]] bool InBlackList(const IPPrefix&) const { return false; }
@@ -59,6 +56,7 @@ class Detector {
   void ReadUpdateFile(fs::path file_path);
   void DetectOutage(DumpedFile update_file);
   void CheckPrefixOutage(AsNum owner_as, IPPrefix prefix, TimeStamp timestamp);
+  void CheckASOutage(AsNum owner_as, IPPrefix prefix, TimeStamp timestamp);
 
  private:
   static std::optional<CalendarTime> GetTimeFromUpdateFileName(

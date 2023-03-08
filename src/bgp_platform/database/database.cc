@@ -87,6 +87,38 @@ std::string Database::InsertPrefixOutageEvent(
   return table_name;
 }
 
+std::string Database::InsertASOutageEvent(const models::ASOutageEvent& event) {
+  auto work       = this->connector_.GetWork();
+  auto duration   = ToCalendarDuration(event.value.duration);
+  auto table_name = this->as_outage_table_name_;
+  work.exec(fmt::format(
+      std::string({
+#include "sql/insert_as_outage_event.sql.inc"
+      }),
+      "table_name"_a = table_name, "country"_a = event.value.country,
+      "as_name"_a = event.value.as_name, "org_name"_a = event.value.org_name,
+      "as_type"_a = event.value.as_type,
+      "s_time"_a  = fmt::gmtime(
+           std::chrono::system_clock::to_time_t(event.value.start_time)),
+      "e_time"_a = fmt::gmtime(
+          std::chrono::system_clock::to_time_t(event.value.end_time)),
+      "duration"_a =
+          fmt::format("{} days {} hours {} minutes {} seconds", duration.days,
+                      duration.hours, duration.minutes, duration.seconds),
+      "total_prefix_num"_a        = event.value.total_prefix_num,
+      "max_outage_prefix_num"_a   = event.value.max_outage_prefix_num,
+      "max_outage_prefix_ratio"_a = event.value.max_outage_prefix_ratio,
+      "pre_vp_paths"_a            = "{}",  // TODO: Set pre_vp_path
+      "eve_vp_paths"_a            = "{}",  // TODO: Set eve_vp_path
+      "outage_prefixes"_a         = "",    // TODO: Set outage prefixes
+      "outage_level"_a            = "",    // TODO: Set outage_level
+      "outage_level_descr"_a      = "",    // TODO: Set outage_level_descr
+      "asn"_a                     = ToUnderlying(event.key.owner_as),
+      "outage_id"_a               = ToUnderlying(event.key.outage_id)));
+  work.commit();
+  return table_name;
+}
+
 void Database::PrefixOutageEnd(
     std::string_view                        table_name,
     const models::PrefixOutageEvent::Key&   event_key,

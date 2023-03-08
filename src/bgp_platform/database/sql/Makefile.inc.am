@@ -4,6 +4,7 @@ SQL_FILES =                                                                    \
     %reldir%/create_as_outage_table.sql                                        \
     %reldir%/create_country_outage_table.sql                                   \
     %reldir%/insert_prefix_outage_event.sql                                    \
+    %reldir%/insert_as_outage_event.sql                                        \
     %reldir%/update_prefix_outage_end.sql                                      \
     ${NOTHING}
 

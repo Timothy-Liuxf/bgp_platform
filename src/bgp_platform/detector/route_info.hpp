@@ -6,11 +6,10 @@
 #include <unordered_set>
 #include <vector>
 
+#include <bgp_platform/common/types.hpp>
 #include <bgp_platform/utils/clock.hpp>
 #include <bgp_platform/utils/defs.hpp>
 #include <bgp_platform/utils/ip.hpp>
-
-#include <bgp_platform/common/types.hpp>
 
 BGP_PLATFORM_NAMESPACE_BEGIN
 
@@ -37,7 +36,7 @@ struct AsRouteInfo {
   ID                                            outage_id = {};
   bool                                          is_outage = false;
   std::unordered_map<IPPrefix, PrefixRouteInfo> prefixes;
-  TimeStamp                                     last_outage_start_time = {};
+  TimePoint                                     last_outage_start_time = {};
 };
 
 struct PrefixRouteInfo {

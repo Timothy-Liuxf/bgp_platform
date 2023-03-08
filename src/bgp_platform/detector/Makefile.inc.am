@@ -3,6 +3,7 @@ noinst_HEADERS +=                                                              \
     %reldir%/route_info.hpp                                                    \
     %reldir%/init_info.hpp                                                     \
     %reldir%/file_watcher.hpp                                                  \
+    %reldir%/outage_event.hpp                                                  \
     ${NOTHING}
 
 noinst_LIBRARIES += build/lib/libdetector.a

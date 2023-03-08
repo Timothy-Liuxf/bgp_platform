@@ -10,6 +10,7 @@
 #include <bgp_platform/utils/clock.hpp>
 #include <bgp_platform/utils/defs.hpp>
 
+#include "models/as_outage_event.hpp"
 #include "models/prefix_outage_event.hpp"
 
 BGP_PLATFORM_NAMESPACE_BEGIN
@@ -24,6 +25,7 @@ class Database {
   void        SetTableTime(TimePoint table_time);
   TimePoint   GetTableTime() const { return this->table_time_; }
   std::string InsertPrefixOutageEvent(const models::PrefixOutageEvent& event);
+  std::string InsertASOutageEvent(const models::ASOutageEvent& event);
   void        PrefixOutageEnd(std::string_view                        table_name,
                               const models::PrefixOutageEvent::Key&   event_key,
                               const models::PrefixOutageEvent::Value& event_value);

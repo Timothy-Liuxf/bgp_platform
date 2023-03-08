@@ -44,7 +44,7 @@ InitInfo::InitInfo(fs::path as_info_path, fs::path top_nx_path,
   }
   {
     // TODO: Read top nx
-    (void)top_nx_path;
+    BGP_PLATFORM_UNUSED_VARIABLE(top_nx_path);
   }
   logger.Info("Successfully to read init info!");
   return;
