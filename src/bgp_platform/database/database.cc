@@ -78,9 +78,10 @@ std::string Database::InsertPrefixOutageEvent(
       "prefix"_a             = IPPrefixToString(event.key.prefix),
       "outage_id"_a          = ToUnderlying(event.key.outage_id)));
   work.commit();
+
   logger.Info() << "Inserted prefix outage event: "
-                << this->prefix_outage_table_name_ << " "
-                << ToUnderlying(event.key.outage_id);
+                << this->prefix_outage_table_name_
+                << " ID: " << ToUnderlying(event.key.outage_id);
   return table_name;
 }
 
@@ -107,6 +108,9 @@ std::string Database::InsertASOutageEvent(const models::ASOutageEvent& event) {
       "asn"_a                     = ToUnderlying(event.key.owner_as),
       "outage_id"_a               = ToUnderlying(event.key.outage_id)));
   work.commit();
+
+  logger.Info() << "Inserted as outage event: " << this->as_outage_table_name_
+                << " ID: " << ToUnderlying(event.key.outage_id);
   return table_name;
 }
 
@@ -140,6 +144,9 @@ void Database::PrefixOutageEnd(
       "outage_id"_a = ToUnderlying(event_key.outage_id),
       "asn"_a       = ToUnderlying(event_key.owner_as)));
   work.commit();
+
+  logger.Info() << "A prefix outage event ends in: " << table_name
+                << " ID: " << ToUnderlying(event_key.outage_id);
 }
 
 bool Database::TableExists(std::string_view table_name) {
