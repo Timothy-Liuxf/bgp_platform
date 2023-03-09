@@ -3,6 +3,7 @@
 
 #include <cstddef>
 #include <functional>
+#include <optional>
 #include <vector>
 
 #include <bgp_platform/common/types.hpp>
@@ -21,21 +22,21 @@ struct ASOutageEvent {
   } key;
 
   struct Value {
-    Country               country;
-    std::string           as_name;
-    std::string           org_name;
-    std::string           as_type;
-    TimePoint             start_time;
-    TimePoint             end_time;
-    Duration              duration;
-    std::size_t           total_prefix_num;
-    std::size_t           max_outage_prefix_num;
-    double                max_outage_prefix_ratio;
-    std::vector<AsNum>    pre_vp_path;
-    std::vector<AsNum>    eve_vp_path;
-    std::vector<IPPrefix> outage_prefixes;
-    std::string           outage_level;
-    std::string           outage_level_description;
+    Country                  country;
+    std::string              as_name;
+    std::string              org_name;
+    std::string              as_type;
+    TimePoint                start_time;
+    std::optional<TimePoint> end_time;
+    std::optional<Duration>  duration;
+    std::size_t              total_prefix_num;
+    std::size_t              max_outage_prefix_num;
+    double                   max_outage_prefix_ratio;
+    std::vector<AsNum>       pre_vp_path;
+    std::vector<AsNum>       eve_vp_path;
+    std::vector<IPPrefix>    outage_prefixes;
+    std::string              outage_level;
+    std::string              outage_level_description;
   } value;
 };
 

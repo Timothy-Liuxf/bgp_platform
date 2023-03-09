@@ -323,12 +323,12 @@ void Detector::CheckPrefixOutage(AsNum owner_as, IPPrefix prefix,
                     this->init_info_.GetAsOrgName(owner_as),
                     this->init_info_.GetAsType(owner_as),
                     timepoint,
-                    TimePoint {},
-                    Duration {},
-                    {},  // TODO: Record pre_vp_paths
-                    {},  // TODO: Record eve_vp_paths
-                    "",  // TODO: Record outage_level
-                    "",  // TODO: Record outage_level_description
+                    std::nullopt,  // NULL
+                    std::nullopt,  // NULL
+                    {},            // TODO: Record pre_vp_paths
+                    {},            // TODO: Record eve_vp_paths
+                    "",            // TODO: Record outage_level
+                    "",            // TODO: Record outage_level_description
                 }};
             auto table_name = this->database_.InsertPrefixOutageEvent(
                 prefix_outage_event);  // Write to database
@@ -439,8 +439,8 @@ void Detector::CheckASOutage(AsNum owner_as, IPPrefix prefix,
                 this->init_info_.GetAsOrgName(owner_as),
                 this->init_info_.GetAsType(owner_as),
                 timepoint,
-                TimePoint {},
-                Duration {},
+                std::nullopt,
+                std::nullopt,
                 outage_prefix_num + normal_prefix_num,
                 outage_prefix_num,
                 (double)outage_prefix_num /

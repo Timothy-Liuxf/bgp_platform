@@ -61,7 +61,6 @@ void Database::CreateTable() {
 std::string Database::InsertPrefixOutageEvent(
     const models::PrefixOutageEvent& event) {
   auto work       = this->connector_.GetWork();
-  auto duration   = ToCalendarDuration(event.value.duration);
   auto table_name = this->prefix_outage_table_name_;
   work.exec(fmt::format(
       std::string({
@@ -72,11 +71,6 @@ std::string Database::InsertPrefixOutageEvent(
       "org_name"_a = event.value.org_name, "as_type"_a = event.value.as_type,
       "s_time"_a = fmt::gmtime(
           std::chrono::system_clock::to_time_t(event.value.start_time)),
-      "e_time"_a = fmt::gmtime(
-          std::chrono::system_clock::to_time_t(event.value.end_time)),
-      "duration"_a =
-          fmt::format("{} days {} hours {} minutes {} seconds", duration.days,
-                      duration.hours, duration.minutes, duration.seconds),
       "pre_vp_paths"_a       = "{}",  // TODO: Set pre_vp_path
       "eve_vp_paths"_a       = "{}",  // TODO: Set eve_vp_path
       "outage_level"_a       = "",    // TODO: Set outage_level
@@ -84,12 +78,14 @@ std::string Database::InsertPrefixOutageEvent(
       "prefix"_a             = IPPrefixToString(event.key.prefix),
       "outage_id"_a          = ToUnderlying(event.key.outage_id)));
   work.commit();
+  logger.Info() << "Inserted prefix outage event: "
+                << this->prefix_outage_table_name_ << " "
+                << ToUnderlying(event.key.outage_id);
   return table_name;
 }
 
 std::string Database::InsertASOutageEvent(const models::ASOutageEvent& event) {
   auto work       = this->connector_.GetWork();
-  auto duration   = ToCalendarDuration(event.value.duration);
   auto table_name = this->as_outage_table_name_;
   work.exec(fmt::format(
       std::string({
@@ -100,11 +96,6 @@ std::string Database::InsertASOutageEvent(const models::ASOutageEvent& event) {
       "as_type"_a = event.value.as_type,
       "s_time"_a  = fmt::gmtime(
            std::chrono::system_clock::to_time_t(event.value.start_time)),
-      "e_time"_a = fmt::gmtime(
-          std::chrono::system_clock::to_time_t(event.value.end_time)),
-      "duration"_a =
-          fmt::format("{} days {} hours {} minutes {} seconds", duration.days,
-                      duration.hours, duration.minutes, duration.seconds),
       "total_prefix_num"_a        = event.value.total_prefix_num,
       "max_outage_prefix_num"_a   = event.value.max_outage_prefix_num,
       "max_outage_prefix_ratio"_a = event.value.max_outage_prefix_ratio,
@@ -123,18 +114,28 @@ void Database::PrefixOutageEnd(
     std::string_view                        table_name,
     const models::PrefixOutageEvent::Key&   event_key,
     const models::PrefixOutageEvent::Value& event_value) {
-  auto work     = this->connector_.GetWork();
-  auto duration = ToCalendarDuration(event_value.duration);
+  auto        work = this->connector_.GetWork();
+  std::string e_time_arg =
+      event_value.end_time == std::nullopt
+          ? std::string("NULL")
+          : fmt::format("\'{:%Y-%m-%d %H:%M:%S}\'",
+                        fmt::gmtime(std::chrono::system_clock::to_time_t(
+                            event_value.end_time.value())));
+  std::string duration_arg = "";
+  if (event_value.duration == std::nullopt) {
+    duration_arg = "NULL";
+  } else {
+    auto duration = ToCalendarDuration(event_value.duration.value());
+    duration_arg =
+        fmt::format("\'{} days {} hours {} minutes {} seconds\'", duration.days,
+                    duration.hours, duration.minutes, duration.seconds);
+  }
   work.exec(fmt::format(
       std::string {
 #include "sql/update_prefix_outage_end.sql.inc"
       },
-      "table_name"_a = table_name,
-      "e_time"_a     = fmt::gmtime(
-              std::chrono::system_clock::to_time_t(event_value.end_time)),
-      "duration"_a =
-          fmt::format("{} days {} hours {} minutes {} seconds", duration.days,
-                      duration.hours, duration.minutes, duration.seconds),
+      "table_name"_a = table_name, "e_time"_a = e_time_arg,
+      "duration"_a  = duration_arg,
       "prefix"_a    = IPPrefixToString(event_key.prefix),
       "outage_id"_a = ToUnderlying(event_key.outage_id),
       "asn"_a       = ToUnderlying(event_key.owner_as)));

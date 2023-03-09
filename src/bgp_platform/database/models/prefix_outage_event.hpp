@@ -2,6 +2,7 @@
 #define BGP_PLATFORM_DATABASE_MODELS_PREFIX_OUTAGE_EVENT_HPP_
 
 #include <functional>
+#include <optional>
 #include <vector>
 
 #include <bgp_platform/common/types.hpp>
@@ -21,17 +22,17 @@ struct PrefixOutageEvent {
   } key;
 
   struct Value {
-    Country            country;
-    std::string        as_name;
-    std::string        org_name;
-    std::string        as_type;
-    TimePoint          start_time;
-    TimePoint          end_time;
-    Duration           duration;
-    std::vector<AsNum> pre_vp_path;
-    std::vector<AsNum> eve_vp_path;
-    std::string        outage_level;
-    std::string        outage_level_description;
+    Country                  country;
+    std::string              as_name;
+    std::string              org_name;
+    std::string              as_type;
+    TimePoint                start_time;
+    std::optional<TimePoint> end_time;
+    std::optional<Duration>  duration;
+    std::vector<AsNum>       pre_vp_path;
+    std::vector<AsNum>       eve_vp_path;
+    std::string              outage_level;
+    std::string              outage_level_description;
   } value;
 };
 
