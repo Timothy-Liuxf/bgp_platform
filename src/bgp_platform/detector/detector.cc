@@ -225,6 +225,8 @@ void Detector::DetectOutage(DumpedFile update_file) {
 
   for (Line line; std::getline(file, line.buf); ++line.num) {
     try {
+      logger.Debug("Parsing line: ", line.num, " of the updating file.");
+
       auto fields    = SplitString(line.buf, '|');
       auto timestamp = StringToNumber<TimeStamp>(fields[1]);
       auto flag      = fields[2];
@@ -237,11 +239,13 @@ void Detector::DetectOutage(DumpedFile update_file) {
             fmt::format("{:%Y-%m-%d %H:%M:%S}",
                         fmt::gmtime(std::chrono::system_clock::to_time_t(
                             TimpStampToTimePoint(timestamp))));
+        logger.Debug("Found a withdraw message.");
 
         if (auto prefix_info_itr =
                 this->route_info_.prefix_route_info_.find(prefix);
             prefix_info_itr != end(this->route_info_.prefix_route_info_)) {
           auto& owner_ass = prefix_info_itr->second.owner_ass_;
+          logger.Debug("Found owner ASs info.");
           for (auto owner_as : owner_ass) {
             if (auto owner_as_route_info_itr =
                     this->route_info_.as_route_info_.find(owner_as);
@@ -265,6 +269,8 @@ void Detector::DetectOutage(DumpedFile update_file) {
               }
             }
 
+            logger.Debug("Checking outages...");
+
             this->CheckPrefixOutage(owner_as, prefix, timestamp);
             this->CheckASOutage(owner_as, prefix, timestamp);
             auto country = this->init_info_.GetAsCountry(owner_as);
@@ -285,21 +291,27 @@ void Detector::DetectOutage(DumpedFile update_file) {
 
 void Detector::CheckPrefixOutage(AsNum owner_as, IPPrefix prefix,
                                  TimeStamp timestamp) {
+  logger.Debug("Checking prefix outage...");
   if (!this->InBlackList(prefix)) {
+    logger.Debug("Not in black list.");
     if (auto owner_as_route_info_itr =
             this->route_info_.as_route_info_.find(owner_as);
         owner_as_route_info_itr != end(this->route_info_.as_route_info_)) {
       auto& owner_as_route_info = owner_as_route_info_itr->second;
+      logger.Debug("Found AS route info");
       if (auto prefix_info_itr = owner_as_route_info.prefixes.find(prefix);
           prefix_info_itr != end(owner_as_route_info.prefixes)) {
+        logger.Debug("Found prefix route info");
         auto  timepoint          = TimpStampToTimePoint(timestamp);
         auto& prefix_info        = prefix_info_itr->second;
         auto  unreachable_vp_num = prefix_info.unreachable_vps.size();
         auto  reachable_vp_num   = prefix_info.reachable_vps.size();
         if (!prefix_info.is_outage) {
+          logger.Debug("Prefix is not outage, checking outage.");
           // Check if the prefix is outaged
           if (unreachable_vp_num > (unreachable_vp_num + reachable_vp_num) *
                                        PREFIX_OUTAGE_THRESHOLD) {
+            logger.Debug("Prefix begins to outage.");
             // The prefix is outaged
             prefix_info.is_outage = true;
             // Check if need to reset outage id
@@ -314,6 +326,7 @@ void Detector::CheckPrefixOutage(AsNum owner_as, IPPrefix prefix,
             owner_as_route_info.outage_prefixes.insert(prefix);
 
             // Record the outage start information
+            logger.Debug("Recording prefix outage information.");
             ID   prefix_outage_id    = ++prefix_info.outage_id;
             auto prefix_outage_event = database::models::PrefixOutageEvent {
                 {
@@ -334,14 +347,18 @@ void Detector::CheckPrefixOutage(AsNum owner_as, IPPrefix prefix,
                     "",            // TODO: Record outage_level
                     "",            // TODO: Record outage_level_description
                 }};
+            logger.Debug("Upload prefix outage to database.");
             auto table_name = this->database_.InsertPrefixOutageEvent(
                 prefix_outage_event);  // Write to database
             this->outage_events_.prefix[std::move(prefix_outage_event.key)] = {
                 std::move(table_name), std::move(prefix_outage_event.value)};
+            logger.Debug("Recorded prefix outage.");
           }
         } else {
+          logger.Debug("Prefix is outage. Check restoration.");
           if (reachable_vp_num > (unreachable_vp_num + reachable_vp_num) *
                                      PREFIX_RESTORE_THRESHOLD) {
+            logger.Debug("Prefix outage restores.");
             prefix_info.is_outage = false;
 
             // TODO: set_pre_pre_vp_paths
@@ -350,6 +367,7 @@ void Detector::CheckPrefixOutage(AsNum owner_as, IPPrefix prefix,
             owner_as_route_info.normal_prefixes.insert(prefix);
 
             // Record outage ending info
+            logger.Debug("Record prefix outage ending info.");
             auto prefix_outage_id = prefix_info.outage_id;
             auto prefix_outage_event_key =
                 database::models::PrefixOutageEvent::Key {owner_as, prefix,
@@ -373,10 +391,13 @@ void Detector::CheckPrefixOutage(AsNum owner_as, IPPrefix prefix,
             prefix_outage_event_value.end_time = timepoint;
             prefix_outage_event_value.duration = timepoint - start_time;
 
+            logger.Debug("Check whether to upload to database.");
             if (this->database_.TableExists(table_name)) {
+              logger.Debug("Upload to database.");
               this->database_.PrefixOutageEnd(table_name,
                                               prefix_outage_event_key,
                                               prefix_outage_event_value);
+              logger.Debug("Uploaded.");
             }
 
             prefix_info.last_outage_start_time = start_time;
@@ -384,17 +405,20 @@ void Detector::CheckPrefixOutage(AsNum owner_as, IPPrefix prefix,
             // TODO: Set pre_vp_paths
 
             this->outage_events_.prefix.erase(prefix_outage_event_itr);
+            logger.Debug("Recorded prefix outage ending event.");
           }
         }
       }
     }
   }
+  logger.Debug("Finish checking prefix outage.");
   return;
 }
 
 void Detector::CheckASOutage(AsNum owner_as, IPPrefix prefix,
                              TimeStamp timestamp) {
   BGP_PLATFORM_UNUSED_PARAMETER(prefix);
+  logger.Debug("Checking AS outage...");
 
   if (auto owner_as_route_info_itr =
           this->route_info_.as_route_info_.find(owner_as);
@@ -404,9 +428,11 @@ void Detector::CheckASOutage(AsNum owner_as, IPPrefix prefix,
     auto  normal_prefix_num   = owner_as_route_info.normal_prefixes.size();
     auto  timepoint           = TimpStampToTimePoint(timestamp);
     if (!owner_as_route_info.is_outage) {
+      logger.Debug("AS is not outage. Check outage.");
       if (outage_prefix_num >
           (outage_prefix_num + normal_prefix_num) * AS_OUTAGE_THRESHOLD) {
         // Outage
+        logger.Debug("A new AS outaged.");
         owner_as_route_info.is_outage = true;
 
         // Check if need to reset outage id
@@ -419,6 +445,7 @@ void Detector::CheckASOutage(AsNum owner_as, IPPrefix prefix,
         }
 
         // Update country info
+        logger.Debug("Check updating country information.");
         auto country = this->init_info_.GetAsCountry(owner_as);
         if (!country.empty()) {
           auto& country_info = this->route_info_.country_route_info_[country];
@@ -431,6 +458,7 @@ void Detector::CheckASOutage(AsNum owner_as, IPPrefix prefix,
         }
 
         // Record AS outage info
+        logger.Debug("Recording AS outage information...");
         ID   as_outage_id    = ++owner_as_route_info.outage_id;
         auto as_outage_event = database::models::ASOutageEvent {
             {
@@ -456,14 +484,18 @@ void Detector::CheckASOutage(AsNum owner_as, IPPrefix prefix,
                 "",  // TODO: Record outage_level
                 "",  // TODO: Record outage_level_description
             }};
+        logger.Debug("Uploading AS outage event to database.");
         auto table_name = this->database_.InsertASOutageEvent(as_outage_event);
         this->outage_events_.as[std::move(as_outage_event.key)] = {
             std::move(table_name), false, std::move(as_outage_event.value)};
+        logger.Debug("Recorded AS outage event.");
       }
     } else {
       // TODO
+      logger.Debug("AS is outage. Check restoration (Not implemented yet).");
     }
   }
+  logger.Debug("Finish checking AS outage.");
   return;
 }
 

@@ -13,6 +13,8 @@ using namespace std::literals::string_literals;
 
 int main() {
   try {
+    logger.Debug("Debug mode.");
+
     const auto    config_path = "config/config.json"s;
     std::ifstream config_file(config_path, std::ios::in);
     if (!config_file) {
