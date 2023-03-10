@@ -181,8 +181,10 @@ void Detector::ReadRibFile(fs::path file_path) {
   }
 
   if (is_first_success_line) {
-    throw std::runtime_error("Failed to parse any line of rib file");
+    throw std::runtime_error("Failed to parse any line of rib file!");
   }
+
+  logger.Info("Successfully parsed rib file!");
 }
 
 std::optional<CalendarTime> Detector::GetTimeFromUpdateFileName(
@@ -210,7 +212,7 @@ void Detector::ReadUpdateFile(fs::path file_path) {
   DumpedFile dumped_file = DumpBGPFile(file_path);
   logger.Info() << "Dumped file: " << dumped_file.path().c_str();
   this->DetectOutage(std::move(dumped_file));
-  logger.Info() << "Finished to detect outage";
+  logger.Info() << "Finished to detect outage.";
 }
 
 void Detector::DetectOutage(DumpedFile update_file) {
@@ -218,6 +220,8 @@ void Detector::DetectOutage(DumpedFile update_file) {
   if (!file) {
     throw std::runtime_error("Failed to open dumped file!");
   }
+
+  logger.Info("Detecting outage...");
 
   for (Line line; std::getline(file, line.buf); ++line.num) {
     try {
