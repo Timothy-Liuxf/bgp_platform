@@ -14,16 +14,14 @@ CXXFLAGS=""
 
 AS_CASE([X$BUILD_CONFIG],
     [XRelease|Xrelease|X], [
-        AX_APPEND_COMPILE_FLAGS(
-            [-O2 -DSIMPLE_LOGGER_ENABLE_LOG_INFO],
-            [CXXFLAGS]
-        )
+        AX_APPEND_COMPILE_FLAGS([                                                      dnl
+                -O2 -DSIMPLE_LOGGER_ENABLE_LOG_INFO                                    dnl
+            ], [CXXFLAGS])
     ],
     [XDebug|Xdebug], [
-        AX_APPEND_COMPILE_FLAGS(
-            [-g -Og -DSIMPLE_LOGGER_ENABLE_LOG_DEBUG],
-            [CXXFLAGS]
-        )
+        AX_APPEND_COMPILE_FLAGS([                                                      dnl
+                -g -Og -DSIMPLE_LOGGER_ENABLE_LOG_DEBUG                                dnl
+            ], [CXXFLAGS])
     ],
     [AC_MSG_ERROR([Unknown build configuration: $BUILD_CONFIG!])])
 
