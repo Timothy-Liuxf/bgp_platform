@@ -40,7 +40,7 @@ class Detector {
                   database_config.database) {}
   Detector(const Detector&) = delete;
 
-  void Detect(fs::path route_data_path);
+  void Detect(fs::path route_data_path, fs::path rib_data_name);
 
  private:
   InitInfo           init_info_;

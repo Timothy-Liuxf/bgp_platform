@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <chrono>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <regex>
 #include <sstream>
@@ -31,7 +32,7 @@ constexpr auto AS_OUTAGE_THRESHOLD      = 0.8;
 constexpr auto AS_RESTORE_THRESHOLD     = 0.8;
 }  // namespace
 
-void Detector::Detect(fs::path route_data_path) {
+void Detector::Detect(fs::path route_data_path, fs::path rib_data_name) {
   if (!fs::exists(route_data_path)) {
     throw std::invalid_argument("Route data path does not exist");
   }
@@ -41,45 +42,69 @@ void Detector::Detect(fs::path route_data_path) {
   }
 
   do {
-    std::vector<fs::path> files = ListAllFiles(route_data_path);
-    std::vector<fs::path> rib_files;
-    std::copy_if(begin(files), end(files), back_inserter(rib_files),
-                 [](const fs::path& path) {
-                   return StartsWith(path.filename().string(), "bview"sv);
-                 });
-    if (rib_files.empty()) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(3600));
-      continue;
-    }
-    auto latest_rib_file = std::max_element(
-        rib_files.begin(), rib_files.end(),
-        [](const fs::path& path1, const fs::path& path2) {
-          return path1.filename().string() < path2.filename().string();
-        });
-    logger.Info("Found bview file: ", latest_rib_file->c_str());
-    this->ReadRibFile(*latest_rib_file);
+    // std::vector<fs::path> files = ListAllFiles(route_data_path);
+    // std::vector<fs::path> rib_files;
+    // std::copy_if(begin(files), end(files), back_inserter(rib_files),
+    //              [](const fs::path& path) {
+    //                return StartsWith(path.filename().string(), "bview"sv);
+    //              });
+    // if (rib_files.empty()) {
+    //   std::this_thread::sleep_for(std::chrono::milliseconds(3600));
+    //   continue;
+    // }
+    // auto latest_rib_file = std::max_element(
+    //     rib_files.begin(), rib_files.end(),
+    //     [](const fs::path& path1, const fs::path& path2) {
+    //       return path1.filename().string() < path2.filename().string();
+    //     });
+    // logger.Info("Found bview file: ", latest_rib_file->c_str());
+
+    this->ReadRibFile(rib_data_name);
     break;
   } while (true);
 
-  FileWatcher watcher(route_data_path);
-  while (true) {
-    fs::path new_file = watcher.WaitForNewFile();
-    logger.Info("New file: ", new_file.c_str());
-    std::optional<CalendarTime> time =
-        GetTimeFromUpdateFileName(new_file.filename().string());
-    BGP_PLATFORM_IF_UNLIKELY(!time.has_value()) {
-      logger.Warn("Fail to parse update file name: ",
-                  new_file.filename().string());
-      continue;
-    }
-    logger.Info("New update file: ", new_file.c_str());
+  // FileWatcher watcher(route_data_path);
+  for (int i = 1; i <= 31; ++i) {
+    for (int j = 0; j < 24; ++j) {
+      for (int k = 0; k < 60; k += 5) {
+        char buf[64] = {0};
+        std::sprintf(buf, "updates.202201%02d.%02d%02d.gz", i, j, k);
+        std::string url =
+            std::string("https://data.ris.ripe.net/rrc00/2022.01/") + buf;
+        // fs::path new_file = watcher.WaitForNewFile();
+        fs::path new_file = fs::path(route_data_path).append(buf);
+        std::cout << buf << std::endl
+                  << url << std::endl
+                  << new_file << std::endl;
+        logger.Info("Downloading ew file: ", new_file.c_str());
+        int ret = std::system(
+            fmt::format("curl \"{}\" > \"{}\"", url, new_file.c_str()).c_str());
+        if (ret != 0) {
+          logger.Warn("Fail to download!");
+          continue;
+        }
+        logger.Info("Downloaded.");
+        std::optional<CalendarTime> time =
+            GetTimeFromUpdateFileName(new_file.filename().string());
+        BGP_PLATFORM_IF_UNLIKELY(!time.has_value()) {
+          logger.Warn("Fail to parse update file name: ",
+                      new_file.filename().string());
+          continue;
+        }
+        logger.Info("New update file: ", new_file.c_str());
 
-    try {
-      this->database_.SetTableTime(ToTimePoint(*time));
-      this->ReadUpdateFile(new_file);
-    } catch (std::exception& e) {
-      logger.Errorf("Failed to process update file {}! Exception: {}",
-                    new_file.c_str(), e.what());
+        try {
+          this->database_.SetTableTime(ToTimePoint(*time));
+          this->ReadUpdateFile(new_file);
+          if (!fs::remove(new_file)) {
+            logger.Warnf("Fail to remove update file: {}!", new_file.c_str());
+          }
+          std::exit(0);
+        } catch (std::exception& e) {
+          logger.Errorf("Failed to process update file {}! Exception: {}",
+                        new_file.c_str(), e.what());
+        }
+      }
     }
   }
 }
@@ -272,7 +297,7 @@ void Detector::DetectOutage(DumpedFile update_file) {
             logger.Debug("Checking outages...");
 
             this->CheckPrefixOutage(owner_as, prefix, timestamp);
-            this->CheckASOutage(owner_as, prefix, timestamp);
+            // this->CheckASOutage(owner_as, prefix, timestamp);
             auto country = this->init_info_.GetAsCountry(owner_as);
             if (!country.empty()) {
               // TODO: Check country outage

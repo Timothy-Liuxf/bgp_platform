@@ -36,7 +36,8 @@ int main() {
             db_config["user"].as_string_view(),
             db_config["password"].as_string_view(),
             db_config["database"].as_string_view()});
-    detector.Detect(config["route-data-path"].as_string_view());
+    detector.Detect(config["route-data-path"].as_string_view(),
+                    config["rib_data_name"].as_string_view());
   } catch (std::exception& e) {
     logger.Error(e.what());
     return 1;
