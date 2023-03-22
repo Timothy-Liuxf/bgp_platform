@@ -17,9 +17,8 @@ using Duration  = std::chrono::system_clock::duration;
   return std::chrono::system_clock::now().time_since_epoch().count();
 }
 
-[[nodiscard]] inline TimePoint TimpStampToTimePoint(TimeStamp timestamp) {
-  return std::chrono::system_clock::time_point(
-      std::chrono::system_clock::duration(timestamp));
+[[nodiscard]] inline TimePoint TimeStampToTimePoint(TimeStamp timestamp) {
+  return std::chrono::system_clock::time_point(std::chrono::seconds(timestamp));
 }
 
 [[nodiscard]] inline TimeStamp TimePointToTimeStamp(TimePoint time_point) {
@@ -45,7 +44,7 @@ struct CalendarTime {
 }
 
 [[nodiscard]] inline CalendarTime ToUTCTime(TimeStamp timestamp) {
-  return ToUTCTime(TimpStampToTimePoint(timestamp));
+  return ToUTCTime(TimeStampToTimePoint(timestamp));
 }
 
 [[nodiscard]] inline TimePoint ToTimePoint(CalendarTime time) {

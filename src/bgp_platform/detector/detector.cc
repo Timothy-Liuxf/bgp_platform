@@ -181,7 +181,7 @@ void Detector::ReadRibFile(fs::path file_path) {
         time_string =
             fmt::format("{:%Y-%m-%d %H:%M:%S}",
                         fmt::gmtime(std::chrono::system_clock::to_time_t(
-                            TimpStampToTimePoint(timestamp))));
+                            TimeStampToTimePoint(timestamp))));
         is_first_success_line = false;
       }
 
@@ -273,7 +273,7 @@ void Detector::DetectOutage(DumpedFile update_file) {
         auto time_string =
             fmt::format("{:%Y-%m-%d %H:%M:%S}",
                         fmt::gmtime(std::chrono::system_clock::to_time_t(
-                            TimpStampToTimePoint(timestamp))));
+                            TimeStampToTimePoint(timestamp))));
         logger.Debug("Found a withdraw message.");
 
         if (auto prefix_info_itr =
@@ -337,7 +337,7 @@ void Detector::CheckPrefixOutage(AsNum owner_as, IPPrefix prefix,
       if (auto prefix_info_itr = owner_as_route_info.prefixes.find(prefix);
           prefix_info_itr != end(owner_as_route_info.prefixes)) {
         logger.Debug("Found prefix route info");
-        auto  timepoint          = TimpStampToTimePoint(timestamp);
+        auto  timepoint          = TimeStampToTimePoint(timestamp);
         auto& prefix_info        = prefix_info_itr->second;
         auto  unreachable_vp_num = prefix_info.unreachable_vps.size();
         auto  reachable_vp_num   = prefix_info.reachable_vps.size();
@@ -461,7 +461,7 @@ void Detector::CheckASOutage(AsNum owner_as, IPPrefix prefix,
     auto& owner_as_route_info = owner_as_route_info_itr->second;
     auto  outage_prefix_num   = owner_as_route_info.outage_prefixes.size();
     auto  normal_prefix_num   = owner_as_route_info.normal_prefixes.size();
-    auto  timepoint           = TimpStampToTimePoint(timestamp);
+    auto  timepoint           = TimeStampToTimePoint(timestamp);
     if (!owner_as_route_info.is_outage) {
       logger.Debug("AS is not outage. Check outage.");
       if (outage_prefix_num >
