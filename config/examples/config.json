@@ -5,6 +5,7 @@
         "top-ip": "info/top_ip.txt"
     },
     "route-data-path": "~/data",
+    "rib_data_name": "~/data/bview.20221225.0000.gz",
     "database": {
         "host": "localhost",
         "port": "5432",
