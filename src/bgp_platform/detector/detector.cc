@@ -67,42 +67,52 @@ void Detector::Detect(fs::path route_data_path, fs::path rib_data_name) {
   for (int i = 1; i <= 31; ++i) {
     for (int j = 0; j < 24; ++j) {
       for (int k = 0; k < 60; k += 5) {
-        char buf[64] = {0};
-        std::sprintf(buf, "updates.202201%02d.%02d%02d.gz", i, j, k);
-        std::string url =
-            std::string("https://data.ris.ripe.net/rrc00/2022.01/") + buf;
-        // fs::path new_file = watcher.WaitForNewFile();
-        fs::path new_file = fs::path(route_data_path).append(buf);
-        std::cout << buf << std::endl
-                  << url << std::endl
-                  << new_file << std::endl;
-        logger.Info("Downloading ew file: ", new_file.c_str());
-        int ret = std::system(
-            fmt::format("curl \"{}\" > \"{}\"", url, new_file.c_str()).c_str());
-        if (ret != 0) {
-          logger.Warn("Fail to download!");
-          continue;
-        }
-        logger.Info("Downloaded.");
-        std::optional<CalendarTime> time =
-            GetTimeFromUpdateFileName(new_file.filename().string());
-        BGP_PLATFORM_IF_UNLIKELY(!time.has_value()) {
-          logger.Warn("Fail to parse update file name: ",
-                      new_file.filename().string());
-          continue;
-        }
-        logger.Info("New update file: ", new_file.c_str());
-
         try {
-          this->database_.SetTableTime(ToTimePoint(*time));
-          this->ReadUpdateFile(new_file);
-          if (!fs::remove(new_file)) {
-            logger.Warnf("Fail to remove update file: {}!", new_file.c_str());
+          char buf[64] = {0};
+          std::sprintf(buf, "updates.202201%02d.%02d%02d.gz", i, j, k);
+          std::string url =
+              std::string("https://data.ris.ripe.net/rrc00/2022.01/") + buf;
+          // fs::path new_file = watcher.WaitForNewFile();
+          fs::path new_file = fs::path(route_data_path).append(buf);
+          std::cout << buf << std::endl
+                    << url << std::endl
+                    << new_file << std::endl;
+          logger.Info("Downloading ew file: ", new_file.c_str());
+          int ret = std::system(
+              fmt::format("curl \"{}\" > \"{}\"", url, new_file.c_str())
+                  .c_str());
+          if (ret != 0) {
+            logger.Warn("Fail to download!");
+            continue;
           }
-          std::exit(0);
+          logger.Info("Downloaded.");
+          std::optional<CalendarTime> time =
+              GetTimeFromUpdateFileName(new_file.filename().string());
+          BGP_PLATFORM_IF_UNLIKELY(!time.has_value()) {
+            logger.Warn("Fail to parse update file name: ",
+                        new_file.filename().string());
+            continue;
+          }
+          logger.Info("New update file: ", new_file.c_str());
+
+          try {
+            this->database_.SetTableTime(ToTimePoint(*time));
+            this->ReadUpdateFile(new_file);
+            if (!fs::remove(new_file)) {
+              logger.Warnf("Fail to remove update file: {}!", new_file.c_str());
+            }
+          } catch (std::exception& e) {
+            logger.Errorf("Failed to process update file {}! Exception: {}",
+                          new_file.c_str(), e.what());
+          }
         } catch (std::exception& e) {
-          logger.Errorf("Failed to process update file {}! Exception: {}",
-                        new_file.c_str(), e.what());
+          logger.Errorf(
+              "Fail to process i = {}, j = {}, k = {}.\nException: {}", i, j, k,
+              e.what());
+        } catch (...) {
+          logger.Errorf(
+              "Fail to process i = {}, j = {}, k = {}.\nUnknown error.", i, j,
+              k);
         }
       }
     }
