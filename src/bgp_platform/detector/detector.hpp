@@ -40,7 +40,8 @@ class Detector {
                   database_config.database) {}
   Detector(const Detector&) = delete;
 
-  void Detect(fs::path route_data_path, fs::path rib_data_name);
+  void Detect(fs::path route_data_path, fs::path rib_data_name, int month,
+              int start_day, int end_day);
 
  private:
   InitInfo           init_info_;

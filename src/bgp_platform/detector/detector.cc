@@ -32,7 +32,8 @@ constexpr auto AS_OUTAGE_THRESHOLD      = 0.8;
 constexpr auto AS_RESTORE_THRESHOLD     = 0.8;
 }  // namespace
 
-void Detector::Detect(fs::path route_data_path, fs::path rib_data_name) {
+void Detector::Detect(fs::path route_data_path, fs::path rib_data_name,
+                      int month, int start_day, int end_day) {
   if (!fs::exists(route_data_path)) {
     throw std::invalid_argument("Route data path does not exist");
   }
@@ -64,14 +65,19 @@ void Detector::Detect(fs::path route_data_path, fs::path rib_data_name) {
   } while (true);
 
   // FileWatcher watcher(route_data_path);
-  for (int i = 1; i <= 31; ++i) {
+  // for (int i = 1; i <= 31; ++i) {
+  //   for (int j = 0; j < 24; ++j) {
+  //     for (int k = 0; k < 60; k += 5) {
+  for (int i = start_day; i <= end_day; ++i) {
     for (int j = 0; j < 24; ++j) {
       for (int k = 0; k < 60; k += 5) {
         try {
-          char buf[64] = {0};
-          std::sprintf(buf, "updates.202201%02d.%02d%02d.gz", i, j, k);
-          std::string url =
-              std::string("https://data.ris.ripe.net/rrc00/2022.01/") + buf;
+          char buf[64]       = {0};
+          char month_buf[16] = {0};
+          std::sprintf(buf, "updates.2022%02d%02d.%02d%02d.gz", month, i, j, k);
+          std::sprintf(month_buf, "2022.%02d", month);
+          std::string url = std::string("https://data.ris.ripe.net/rrc00/") +
+                            month_buf + '/' + buf;
           // fs::path new_file = watcher.WaitForNewFile();
           fs::path new_file = fs::path(route_data_path).append(buf);
           std::cout << buf << std::endl
