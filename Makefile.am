@@ -2,7 +2,7 @@ bin_PROGRAMS =
 noinst_LIBRARIES =
 noinst_HEADERS =
 EXTRA_DIST =
-SUBDIRS = third_party/simple_logger
+SUBDIRS = third_party/simple_logger third_party/tclap
 
 include third_party/Makefile.inc.am
 include src/bgp_platform/Makefile.inc.am

@@ -33,6 +33,7 @@ AX_APPEND_COMPILE_FLAGS([                                                       
     -Ithird_party/inotify-cpp/src/include                                              dnl
     -Ithird_party/fmt/include -DFMT_HEADER_ONLY                                        dnl
     -Ithird_party/simple_logger/include                                                dnl
+    -Ithird_party/tclap/include                                                        dnl
 ], [CXXFLAGS])
 
 # Checks for programs.

@@ -13,3 +13,6 @@
 [submodule "third_party/simple_logger"]
 	path = third_party/simple_logger
 	url = https://github.com/Timothy-Liuxf/simple_logger.git
+[submodule "third_party/tclap"]
+	path = third_party/tclap
+	url = https://github.com/mirror/tclap.git
