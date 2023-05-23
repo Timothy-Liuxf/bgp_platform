@@ -2,6 +2,7 @@
 #define BGP_PLATFORM_ROUTEINFO_ROUTEINFO_HPP_
 
 #include <bgp_platform/utils/defs.hpp>
+#include <bgp_platform/utils/types.hpp>
 
 #include "init_info.hpp"
 #include "route_info.hpp"
@@ -92,6 +93,13 @@ class RouteData {
   [[nodiscard]] std::string GetAsType(AsNum as_num) const {
     return this->init_info_.GetAsType(as_num);
   }
+
+ private:
+  [[nodiscard]] static AsPath ParseAsPath(
+      const std::vector<std::string_view>& as_path_str);
+
+  void InsertNewAsPath(AsNum as_num, AsNum vp_num, const AsPath& as_path,
+                       const IPPrefix& prefix);
 
  private:
   RouteDataListener& listener_;

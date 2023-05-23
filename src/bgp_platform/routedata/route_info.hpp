@@ -23,12 +23,13 @@ struct CountryRouteInfo {
 
 struct AsRouteInfo {
   struct PrefixRouteInfo {
-    std::unordered_set<AsNum>                     reachable_vps;
-    std::unordered_set<AsNum>                     unreachable_vps;
-    std::unordered_map<AsNum, std::vector<AsNum>> vp_paths;
-    ID                                            outage_id = {};
-    bool                                          is_outage = false;
-    TimePoint                                     last_outage_start_time = {};
+    std::unordered_set<AsNum>                             reachable_vps;
+    std::unordered_set<AsNum>                             unreachable_vps;
+    std::unordered_map<AsNum, std::unordered_set<AsPath>> vp_paths;
+    std::unordered_map<AsNum, std::unordered_set<AsPath>> withdrawed_vp_paths;
+    ID                                                    outage_id = {};
+    bool                                                  is_outage = false;
+    TimePoint last_outage_start_time                                = {};
   };
 
   std::unordered_set<IPPrefix>                  normal_prefixes;

@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <string>
 #include <type_traits>
+#include <vector>
 
 #include <bgp_platform/utils/defs.hpp>
 
@@ -18,6 +19,7 @@ struct Line {
 enum class AsNum : std::uint32_t {};
 enum class ID : std::uint64_t {};
 using Country = std::string;
+using AsPath  = std::vector<AsNum>;
 
 constexpr inline ID& operator++(ID& id) {
   return id = ID(static_cast<std::underlying_type_t<ID>>(id) + 1);
