@@ -57,7 +57,7 @@ void Detector::Detect(fs::path route_data_path) {
           return path1.filename().string() < path2.filename().string();
         });
     logger.Info("Found bview file: ", latest_rib_file->c_str());
-    this->ReadRibFile(*latest_rib_file);
+    this->route_data_.ReadRibFile(*latest_rib_file);
     break;
   } while (true);
 
@@ -76,115 +76,12 @@ void Detector::Detect(fs::path route_data_path) {
 
     try {
       this->database_.SetTableTime(ToTimePoint(*time));
-      this->ReadUpdateFile(new_file);
+      this->route_data_.ReadUpdateFile(new_file);
     } catch (std::exception& e) {
       logger.Errorf("Failed to process update file {}! Exception: {}",
                     new_file.c_str(), e.what());
     }
   }
-}
-
-void Detector::ReadRibFile(fs::path file_path) {
-  DumpedFile dumped_file = DumpBGPFile(file_path);
-  logger.Info("Dumped file: ", dumped_file.path().c_str());
-  std::ifstream file(dumped_file.path(), std::ios::in);
-  if (!file) {
-    throw std::runtime_error("Failed to open dumped file!");
-  }
-
-  bool        is_first_success_line = true;
-  std::string time_string           = "";
-  for (Line line; std::getline(file, line.buf); ++line.num) {
-    try {
-      auto fields = SplitString(line.buf, '|');
-      if (fields.size() < 7) {
-        logger.Warn() << "Failed to parse line: " << line.num
-                      << "\n- Content: " << line.buf;
-        continue;
-      }
-
-      auto               timestamp   = StringToNumber<TimeStamp>(fields[1]);
-      auto               prefix      = StringToIPPrefix(fields[5]);
-      auto               as_path_str = SplitString(fields[6], ' ');
-      std::vector<AsNum> as_path;
-      as_path.reserve(as_path_str.size());
-
-      // Aggregated AS: {as1, as2}
-      BGP_PLATFORM_IF_UNLIKELY(as_path_str.back().front() == '{') {
-        BGP_PLATFORM_IF_UNLIKELY(as_path_str.back().back() != '}') {
-          throw std::runtime_error("Invalid AS path!");
-        }
-        std::transform(
-            begin(as_path_str), end(as_path_str) - 1, back_inserter(as_path),
-            [](const std::string_view& as_num_str) {
-              return AsNum(
-                  StringToNumber<std::underlying_type_t<AsNum>>(as_num_str));
-            });
-
-        auto aggregated_as_str = SplitString(
-            as_path_str.back().substr(1, as_path_str.back().size() - 2), ',');
-        if (aggregated_as_str.size() > 1) {
-          throw std::logic_error(
-              "Multiple aggregated AS has not been implemented!");
-        }
-        as_path.push_back(AsNum(StringToNumber<std::underlying_type_t<AsNum>>(
-            aggregated_as_str[0])));
-      }
-      else {
-        std::transform(
-            begin(as_path_str), end(as_path_str), back_inserter(as_path),
-            [](const std::string_view& as_num_str) {
-              return AsNum(
-                  StringToNumber<std::underlying_type_t<AsNum>>(as_num_str));
-            });
-      }
-
-      auto vp_num = as_path[0];
-      auto as_num = as_path.back();
-
-      BGP_PLATFORM_IF_UNLIKELY(is_first_success_line) {
-        time_string =
-            fmt::format("{:%Y-%m-%d %H:%M:%S}",
-                        fmt::gmtime(std::chrono::system_clock::to_time_t(
-                            TimeStampToTimePoint(timestamp))));
-        is_first_success_line = false;
-      }
-
-      // Record reachability information of prefix
-      auto& as_route_info  = this->route_info_.as_route_info_[as_num];
-      auto& as_prefix_info = as_route_info.prefixes[prefix];
-      as_prefix_info.reachable_vps.insert(vp_num);
-      auto& vp_path_info = as_prefix_info.vp_paths[vp_num];
-      if (vp_path_info.empty()) {
-        vp_path_info = std::move(as_path);
-      } else {
-        // TODO: Question: Whether to insert back?
-        vp_path_info.insert(end(vp_path_info), begin(as_path), end(as_path));
-      }
-
-      // Record country information
-      auto coutry = this->init_info_.GetAsCountry(as_num);
-      if (!coutry.empty()) {
-        this->route_info_.country_route_info_[coutry].normal_ass.insert(as_num);
-      }
-
-      // Record the AS to which the prefix belongs
-      this->route_info_.prefix_route_info_[prefix].owner_ass_.insert(as_num);
-
-      // TODO: Build IP Prefix Tree
-    } catch (std::exception& e) {
-      logger.Warn() << "Failed to parse line: " << line.num
-                    << "\n- Content: " << line.buf
-                    << "\n- Exception: " << e.what();
-      continue;
-    }
-  }
-
-  if (is_first_success_line) {
-    throw std::runtime_error("Failed to parse any line of rib file!");
-  }
-
-  logger.Info("Successfully parsed rib file!");
 }
 
 std::optional<CalendarTime> Detector::GetTimeFromUpdateFileName(
@@ -207,86 +104,27 @@ std::optional<CalendarTime> Detector::GetTimeFromUpdateFileName(
   };
 }
 
-void Detector::ReadUpdateFile(fs::path file_path) {
-  logger.Info() << "Start to read update file: " << file_path.c_str();
-  DumpedFile dumped_file = DumpBGPFile(file_path);
-  logger.Info() << "Dumped file: " << dumped_file.path().c_str();
-  this->DetectOutage(std::move(dumped_file));
-  logger.Info() << "Finished to detect outage.";
+void Detector::OnRouteRemoved(AsNum owner_as, IPPrefix prefix,
+                              TimeStamp timestamp) {
+  logger.Debug("Checking outages...");
+
+  this->CheckPrefixOutage(owner_as, prefix, timestamp);
+  this->CheckASOutage(owner_as, prefix, timestamp);
+  auto country = this->route_data_.GetAsCountry(owner_as);
+  if (!country.empty()) {
+    // TODO: Check country outage
+  }
 }
 
-void Detector::DetectOutage(DumpedFile update_file) {
-  std::ifstream file(update_file.path(), std::ios::in);
-  if (!file) {
-    throw std::runtime_error("Failed to open dumped file!");
-  }
+void Detector::OnRouteAdded(AsNum owner_as, IPPrefix prefix,
+                            TimeStamp timestamp) {
+  // TODO: Not implemented
 
-  logger.Info("Detecting outage...");
+  BGP_PLATFORM_UNUSED_PARAMETER(owner_as);
+  BGP_PLATFORM_UNUSED_PARAMETER(prefix);
+  BGP_PLATFORM_UNUSED_PARAMETER(timestamp);
 
-  for (Line line; std::getline(file, line.buf); ++line.num) {
-    try {
-      logger.Debug("Parsing line: ", line.num, " of the updating file.");
-
-      auto fields    = SplitString(line.buf, '|');
-      auto timestamp = StringToNumber<TimeStamp>(fields[1]);
-      auto flag      = fields[2];
-      auto vp_num =
-          AsNum(StringToNumber<std::underlying_type_t<AsNum>>(fields[4]));
-
-      if (flag == "W"sv) {
-        auto prefix = StringToIPPrefix(fields[5]);
-        auto time_string =
-            fmt::format("{:%Y-%m-%d %H:%M:%S}",
-                        fmt::gmtime(std::chrono::system_clock::to_time_t(
-                            TimeStampToTimePoint(timestamp))));
-        logger.Debug("Found a withdraw message.");
-
-        if (auto prefix_info_itr =
-                this->route_info_.prefix_route_info_.find(prefix);
-            prefix_info_itr != end(this->route_info_.prefix_route_info_)) {
-          auto& owner_ass = prefix_info_itr->second.owner_ass_;
-          logger.Debug("Found owner ASs info.");
-          for (auto owner_as : owner_ass) {
-            if (auto owner_as_route_info_itr =
-                    this->route_info_.as_route_info_.find(owner_as);
-                owner_as_route_info_itr !=
-                end(this->route_info_.as_route_info_)) {
-              auto& owner_as_route_info = owner_as_route_info_itr->second;
-              if (auto prefix_info_itr =
-                      owner_as_route_info.prefixes.find(prefix);
-                  prefix_info_itr != end(owner_as_route_info.prefixes)) {
-                auto& prefix_info = prefix_info_itr->second;
-                if (auto rechable_vps_itr =
-                        prefix_info.reachable_vps.find(vp_num);
-                    rechable_vps_itr != end(prefix_info.reachable_vps)) {
-                  prefix_info.reachable_vps.erase(rechable_vps_itr);
-                  prefix_info.unreachable_vps.insert(vp_num);
-                }
-                if (auto vp_path_itr = prefix_info.vp_paths.find(vp_num);
-                    vp_path_itr != end(prefix_info.vp_paths)) {
-                  prefix_info.vp_paths.erase(vp_path_itr);
-                }
-              }
-            }
-
-            logger.Debug("Checking outages...");
-
-            this->CheckPrefixOutage(owner_as, prefix, timestamp);
-            this->CheckASOutage(owner_as, prefix, timestamp);
-            auto country = this->init_info_.GetAsCountry(owner_as);
-            if (!country.empty()) {
-              // TODO: Check country outage
-            }
-          }
-        }
-      }
-    } catch (std::exception& e) {
-      logger.Warn() << "Failed to parse line: " << line.num
-                    << "\n- Content: " << line.buf
-                    << "\n- Exception: " << e.what();
-      continue;
-    }
-  }
+  throw std::logic_error("Not implemented: Detector::OnRouteAdded!");
 }
 
 void Detector::CheckPrefixOutage(AsNum owner_as, IPPrefix prefix,
@@ -294,10 +132,10 @@ void Detector::CheckPrefixOutage(AsNum owner_as, IPPrefix prefix,
   logger.Debug("Checking prefix outage...");
   if (!this->InBlackList(prefix)) {
     logger.Debug("Not in black list.");
-    if (auto owner_as_route_info_itr =
-            this->route_info_.as_route_info_.find(owner_as);
-        owner_as_route_info_itr != end(this->route_info_.as_route_info_)) {
-      auto& owner_as_route_info = owner_as_route_info_itr->second;
+    if (auto owner_as_route_info_ptr =
+            this->route_data_.GetASRouteInfo(owner_as);
+        owner_as_route_info_ptr != nullptr) {
+      auto& owner_as_route_info = *owner_as_route_info_ptr;
       logger.Debug("Found AS route info");
       if (auto prefix_info_itr = owner_as_route_info.prefixes.find(prefix);
           prefix_info_itr != end(owner_as_route_info.prefixes)) {
@@ -335,10 +173,10 @@ void Detector::CheckPrefixOutage(AsNum owner_as, IPPrefix prefix,
                     prefix_outage_id,
                 },
                 {
-                    this->init_info_.GetAsCountry(owner_as),
-                    this->init_info_.GetAsAutName(owner_as),
-                    this->init_info_.GetAsOrgName(owner_as),
-                    this->init_info_.GetAsType(owner_as),
+                    this->route_data_.GetAsCountry(owner_as),
+                    this->route_data_.GetAsAutName(owner_as),
+                    this->route_data_.GetAsOrgName(owner_as),
+                    this->route_data_.GetAsType(owner_as),
                     timepoint,
                     std::nullopt,  // NULL
                     std::nullopt,  // NULL
@@ -420,10 +258,9 @@ void Detector::CheckASOutage(AsNum owner_as, IPPrefix prefix,
   BGP_PLATFORM_UNUSED_PARAMETER(prefix);
   logger.Debug("Checking AS outage...");
 
-  if (auto owner_as_route_info_itr =
-          this->route_info_.as_route_info_.find(owner_as);
-      owner_as_route_info_itr != end(this->route_info_.as_route_info_)) {
-    auto& owner_as_route_info = owner_as_route_info_itr->second;
+  if (auto owner_as_route_info_ptr = this->route_data_.GetASRouteInfo(owner_as);
+      owner_as_route_info_ptr != nullptr) {
+    auto& owner_as_route_info = *owner_as_route_info_ptr;
     auto  outage_prefix_num   = owner_as_route_info.outage_prefixes.size();
     auto  normal_prefix_num   = owner_as_route_info.normal_prefixes.size();
     auto  timepoint           = TimeStampToTimePoint(timestamp);
@@ -446,9 +283,10 @@ void Detector::CheckASOutage(AsNum owner_as, IPPrefix prefix,
 
         // Update country info
         logger.Debug("Check updating country information.");
-        auto country = this->init_info_.GetAsCountry(owner_as);
+        auto country = this->route_data_.GetAsCountry(owner_as);
         if (!country.empty()) {
-          auto& country_info = this->route_info_.country_route_info_[country];
+          auto& country_info =
+              this->route_data_.GetOrInsertCountryRouteInfo(country);
           if (auto owner_as_in_normal_ass_itr =
                   country_info.normal_ass.find(owner_as);
               owner_as_in_normal_ass_itr != end(country_info.normal_ass)) {
@@ -467,9 +305,9 @@ void Detector::CheckASOutage(AsNum owner_as, IPPrefix prefix,
             },
             {
                 country,  // TODO: change to Chinese name
-                this->init_info_.GetAsAutName(owner_as),
-                this->init_info_.GetAsOrgName(owner_as),
-                this->init_info_.GetAsType(owner_as),
+                this->route_data_.GetAsAutName(owner_as),
+                this->route_data_.GetAsOrgName(owner_as),
+                this->route_data_.GetAsType(owner_as),
                 timepoint,
                 std::nullopt,
                 std::nullopt,

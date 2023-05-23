@@ -6,22 +6,17 @@
 #include <utility>
 
 #include <bgp_platform/database/database.hpp>
+#include <bgp_platform/routedata/routedata.hpp>
 #include <bgp_platform/utils/defs.hpp>
 #include <bgp_platform/utils/files.hpp>
 
-#include "init_info.hpp"
 #include "outage_event.hpp"
-#include "route_info.hpp"
 
 BGP_PLATFORM_NAMESPACE_BEGIN
 
-class Detector {
+class Detector : public RouteDataListener {
  public:
-  struct InitInfoFilePath {
-    fs::path as_info;
-    fs::path top_nx;
-    fs::path top_ip;
-  };
+  using InitInfoFilePath = RouteData::InitInfoFilePath;
 
   struct DatabaseConfig {
     std::string_view host;
@@ -33,18 +28,20 @@ class Detector {
 
   Detector(const InitInfoFilePath& init_info_file_path,
            const DatabaseConfig&   database_config)
-      : init_info_(init_info_file_path.as_info, init_info_file_path.top_nx,
-                   init_info_file_path.top_ip),
+      : route_data_(*this, init_info_file_path),
         database_(database_config.host, database_config.port,
                   database_config.user, database_config.password,
                   database_config.database) {}
   Detector(const Detector&) = delete;
 
-  void Detect(fs::path route_data_path);
+  void         Detect(fs::path route_data_path);
+  virtual void OnRouteRemoved(AsNum owner_as, IPPrefix prefix,
+                              TimeStamp timestamp) override;
+  virtual void OnRouteAdded(AsNum owner_as, IPPrefix prefix,
+                            TimeStamp timestamp) override;
 
  private:
-  InitInfo           init_info_;
-  RouteInfo          route_info_;
+  RouteData          route_data_;
   database::Database database_;
   OutageEvent        outage_events_;
 
@@ -52,9 +49,6 @@ class Detector {
   [[nodiscard]] bool InBlackList(const IPPrefix&) const { return false; }
 
  private:
-  void ReadRibFile(fs::path file_path);
-  void ReadUpdateFile(fs::path file_path);
-  void DetectOutage(DumpedFile update_file);
   void CheckPrefixOutage(AsNum owner_as, IPPrefix prefix, TimeStamp timestamp);
   void CheckASOutage(AsNum owner_as, IPPrefix prefix, TimeStamp timestamp);
 

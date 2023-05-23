@@ -1,12 +1,11 @@
-#ifndef BGP_PLATFORM_DETECTOR_INIT_INFO_HPP_
-#define BGP_PLATFORM_DETECTOR_INIT_INFO_HPP_
+#ifndef BGP_PLATFORM_ROUTEINFO_INIT_INFO_HPP_
+#define BGP_PLATFORM_ROUTEINFO_INIT_INFO_HPP_
 
 #include <unordered_map>
 
+#include <bgp_platform/common/types.hpp>
 #include <bgp_platform/utils/defs.hpp>
 #include <bgp_platform/utils/files.hpp>
-
-#include <bgp_platform/common/types.hpp>
 
 BGP_PLATFORM_NAMESPACE_BEGIN
 
@@ -32,4 +31,4 @@ class InitInfo {
 
 BGP_PLATFORM_NAMESPACE_END
 
-#endif  // BGP_PLATFORM_DETECTOR_INIT_INFO_HPP_
+#endif  // BGP_PLATFORM_ROUTEINFO_INIT_INFO_HPP_
