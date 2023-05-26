@@ -1,0 +1,3 @@
+include %reldir%/bgp_platform/Makefile.inc.am
+include %reldir%/input_data/Makefile.inc.am
+include %reldir%/detect_model/Makefile.inc.am
