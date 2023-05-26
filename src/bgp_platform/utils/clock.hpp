@@ -8,13 +8,14 @@
 
 BGP_PLATFORM_NAMESPACE_BEGIN
 
-using TimeStamp =
-    std::chrono::time_point<std::chrono::system_clock>::duration::rep;
+using TimeStamp = std::chrono::seconds::rep;
 using TimePoint = std::chrono::time_point<std::chrono::system_clock>;
 using Duration  = std::chrono::system_clock::duration;
 
 [[nodiscard]] inline TimeStamp GetTimeStamp() {
-  return std::chrono::system_clock::now().time_since_epoch().count();
+  return std::chrono::duration_cast<std::chrono::seconds>(
+             std::chrono::system_clock::now().time_since_epoch())
+      .count();
 }
 
 [[nodiscard]] inline TimePoint TimeStampToTimePoint(TimeStamp timestamp) {
@@ -22,7 +23,9 @@ using Duration  = std::chrono::system_clock::duration;
 }
 
 [[nodiscard]] inline TimeStamp TimePointToTimeStamp(TimePoint time_point) {
-  return time_point.time_since_epoch().count();
+  return std::chrono::duration_cast<std::chrono::seconds>(
+             time_point.time_since_epoch())
+      .count();
 }
 
 struct CalendarTime {
@@ -34,8 +37,7 @@ struct CalendarTime {
   int second;
 };
 
-[[nodiscard]] inline CalendarTime ToUTCTime(
-    std::chrono::time_point<std::chrono::system_clock> tp) {
+[[nodiscard]] inline CalendarTime ToUTCTime(TimePoint tp) {
   auto c_time     = std::chrono::system_clock::to_time_t(tp);
   auto c_utc_time = *std::gmtime(&c_time);
   return CalendarTime {c_utc_time.tm_year + 1900, c_utc_time.tm_mon + 1,

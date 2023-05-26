@@ -80,7 +80,8 @@
         "pqxx": "cpp",
         "*.inc": "cpp",
         "any": "cpp",
-        "*.o": "cpp"
+        "*.o": "cpp",
+        "shared_mutex": "cpp"
     },
     "cmake.sourceDirectory": "${workspaceFolder}/third_party/inotify-cpp/src"
 }

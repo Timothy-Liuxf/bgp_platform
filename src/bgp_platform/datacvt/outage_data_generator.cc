@@ -119,14 +119,18 @@ void OutageDataGenerator::OnRouteRemoved(AsNum owner_as, IPPrefix prefix,
     return;
   }
 
-  logger.Debug("Checking outage...");
+  logger.Debug("Labeling outage...");
 
   if (auto as_outage_info_itr = this->outage_data_.find(owner_as);
       as_outage_info_itr != end(this->outage_data_)) {
+    logger.Debug("AS {} is in outage data.", ToUnderlying(owner_as));
     const auto& outage_times  = as_outage_info_itr->second;
     auto        as_route_info = this->route_data_.GetASRouteInfo(owner_as);
     if (as_route_info != nullptr) {
+      logger.Debug("AS {} has route info.", ToUnderlying(owner_as));
+      bool is_outage = false;
       if (!outage_times.empty()) {
+        logger.Debug("AS {} has outage times.", ToUnderlying(owner_as));
         auto time_range = std::upper_bound(
             begin(outage_times), end(outage_times), timestamp,
             [](TimeStamp                              timestamp,
@@ -134,7 +138,6 @@ void OutageDataGenerator::OnRouteRemoved(AsNum owner_as, IPPrefix prefix,
               return timestamp < outage_time.first;
             });
 
-        bool is_outage = false;
         if (time_range != begin(outage_times)) {
           --time_range;
           if (timestamp >= time_range->first &&
@@ -144,58 +147,59 @@ void OutageDataGenerator::OnRouteRemoved(AsNum owner_as, IPPrefix prefix,
         } else {
           is_outage = false;
         }
-
-        std::size_t as_withdrawed_path_count = 0, as_normal_path_count = 0;
-        std::size_t collector_unreachable_vps = 0, collector_reachable_vps = 0;
-        std::size_t unreachable_prefix = 0, reachable_prefix = 0;
-        for (auto& prefix_route_pair : as_route_info->prefixes) {
-          auto& prefix_route_info = prefix_route_pair.second;
-          as_withdrawed_path_count +=
-              std::accumulate(begin(prefix_route_info.withdrawed_vp_paths),
-                              end(prefix_route_info.withdrawed_vp_paths), 0,
-                              [](auto count, auto& vp_path_pair) {
-                                return count + vp_path_pair.second.size();
-                              });
-          as_normal_path_count +=
-              std::accumulate(begin(prefix_route_info.vp_paths),
-                              end(prefix_route_info.vp_paths), 0,
-                              [](auto count, auto& vp_path_pair) {
-                                return count + vp_path_pair.second.size();
-                              });
-          collector_unreachable_vps += prefix_route_info.unreachable_vps.size();
-          collector_reachable_vps += prefix_route_info.reachable_vps.size();
-          if (prefix_route_info.reachable_vps.empty()) {
-            ++unreachable_prefix;
-          } else {
-            ++reachable_prefix;
-          }
-        }
-        double as_withdrawed_path_ratio =
-            as_normal_path_count + as_withdrawed_path_count == 0
-                ? 0.0
-                : static_cast<double>(as_withdrawed_path_count) /
-                      (as_normal_path_count + as_withdrawed_path_count);
-        double collector_unreachable_vp_ratio =
-            collector_reachable_vps + collector_unreachable_vps == 0
-                ? 0.0
-                : static_cast<double>(collector_unreachable_vps) /
-                      (collector_reachable_vps + collector_unreachable_vps);
-        double unreachable_prefix_ratio =
-            unreachable_prefix + reachable_prefix == 0
-                ? 0.0
-                : static_cast<double>(unreachable_prefix) /
-                      (unreachable_prefix + reachable_prefix);
-
-        this->output_file_
-            << fmt::format("{},{},{},{},{},{},{}", is_outage ? 1 : 0,
-                           as_withdrawed_path_ratio,
-                           as_normal_path_count + as_withdrawed_path_count,
-                           collector_unreachable_vp_ratio,
-                           collector_reachable_vps + collector_unreachable_vps,
-                           unreachable_prefix_ratio,
-                           unreachable_prefix + reachable_prefix)
-            << std::endl;
+      } else {
+        logger.Debug("AS {} has no outage times.", ToUnderlying(owner_as));
       }
+      std::size_t as_withdrawed_path_count = 0, as_normal_path_count = 0;
+      std::size_t collector_unreachable_vps = 0, collector_reachable_vps = 0;
+      std::size_t unreachable_prefix = 0, reachable_prefix = 0;
+      for (auto& prefix_route_pair : as_route_info->prefixes) {
+        auto& prefix_route_info = prefix_route_pair.second;
+        as_withdrawed_path_count +=
+            std::accumulate(begin(prefix_route_info.withdrawed_vp_paths),
+                            end(prefix_route_info.withdrawed_vp_paths), 0,
+                            [](auto count, auto& vp_path_pair) {
+                              return count + vp_path_pair.second.size();
+                            });
+        as_normal_path_count += std::accumulate(
+            begin(prefix_route_info.vp_paths), end(prefix_route_info.vp_paths),
+            0, [](auto count, auto& vp_path_pair) {
+              return count + vp_path_pair.second.size();
+            });
+        collector_unreachable_vps += prefix_route_info.unreachable_vps.size();
+        collector_reachable_vps += prefix_route_info.reachable_vps.size();
+        if (prefix_route_info.reachable_vps.empty()) {
+          ++unreachable_prefix;
+        } else {
+          ++reachable_prefix;
+        }
+      }
+      double as_withdrawed_path_ratio =
+          as_normal_path_count + as_withdrawed_path_count == 0
+              ? 0.0
+              : static_cast<double>(as_withdrawed_path_count) /
+                    (as_normal_path_count + as_withdrawed_path_count);
+      double collector_unreachable_vp_ratio =
+          collector_reachable_vps + collector_unreachable_vps == 0
+              ? 0.0
+              : static_cast<double>(collector_unreachable_vps) /
+                    (collector_reachable_vps + collector_unreachable_vps);
+      double unreachable_prefix_ratio =
+          unreachable_prefix + reachable_prefix == 0
+              ? 0.0
+              : static_cast<double>(unreachable_prefix) /
+                    (unreachable_prefix + reachable_prefix);
+
+      this->output_file_ << fmt::format(
+                                "{},{},{},{},{},{},{}", is_outage ? 1 : 0,
+                                as_withdrawed_path_ratio,
+                                as_normal_path_count + as_withdrawed_path_count,
+                                collector_unreachable_vp_ratio,
+                                collector_reachable_vps +
+                                    collector_unreachable_vps,
+                                unreachable_prefix_ratio,
+                                unreachable_prefix + reachable_prefix)
+                         << std::endl;
     }
   }
 }
