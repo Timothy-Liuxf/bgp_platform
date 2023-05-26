@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_INIT([bgp_platform], [1.0.0])
+AC_INIT([bgp_platform], [0.1.0])
 AC_CONFIG_SRCDIR([src/bgp_platform/main.cc])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIRS([m4 third_party/autoconf-archive/m4])

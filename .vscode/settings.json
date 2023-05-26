@@ -79,7 +79,8 @@
         "typeindex": "cpp",
         "pqxx": "cpp",
         "*.inc": "cpp",
-        "any": "cpp"
+        "any": "cpp",
+        "*.o": "cpp"
     },
     "cmake.sourceDirectory": "${workspaceFolder}/third_party/inotify-cpp/src"
 }
