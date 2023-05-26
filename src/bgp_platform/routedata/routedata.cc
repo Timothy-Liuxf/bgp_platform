@@ -43,7 +43,8 @@ AsPath RouteData::ParseAsPath(
 }
 
 void RouteData::InsertNewAsPath(AsNum as_num, AsNum vp_num,
-                                const AsPath& as_path, const IPPrefix& prefix) {
+                                const AsPath& as_path, const IPPrefix& prefix,
+                                TimeStamp timestamp) {
   // Record reachability information of prefix
   auto& as_route_info  = this->route_info_.as_route_info_[as_num];
   auto& as_prefix_info = as_route_info.prefixes[prefix];
@@ -65,6 +66,8 @@ void RouteData::InsertNewAsPath(AsNum as_num, AsNum vp_num,
 
   // Record the AS to which the prefix belongs
   this->route_info_.prefix_route_info_[prefix].owner_ass_.insert(as_num);
+
+  this->listener_.OnRouteAdded(as_num, prefix, timestamp);
 }
 
 void RouteData::ReadRibFile(fs::path file_path) {
@@ -102,7 +105,7 @@ void RouteData::ReadRibFile(fs::path file_path) {
         is_first_success_line = false;
       }
 
-      this->InsertNewAsPath(as_num, vp_num, as_path, prefix);
+      this->InsertNewAsPath(as_num, vp_num, as_path, prefix, timestamp);
 
       // TODO: Build IP Prefix Tree
     } catch (std::exception& e) {
@@ -192,7 +195,7 @@ void RouteData::ReadUpdateFile(fs::path file_path) {
         auto as_path     = ParseAsPath(as_path_str);
         auto as_num      = as_path.back();
 
-        this->InsertNewAsPath(as_num, vp_num, as_path, prefix);
+        this->InsertNewAsPath(as_num, vp_num, as_path, prefix, timestamp);
       }
     } catch (std::exception& e) {
       logger.Warn() << "Failed to parse line: " << line.num

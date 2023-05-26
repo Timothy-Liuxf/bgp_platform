@@ -99,7 +99,7 @@ class RouteData {
       const std::vector<std::string_view>& as_path_str);
 
   void InsertNewAsPath(AsNum as_num, AsNum vp_num, const AsPath& as_path,
-                       const IPPrefix& prefix);
+                       const IPPrefix& prefix, TimeStamp timestamp);
 
  private:
   RouteDataListener& listener_;

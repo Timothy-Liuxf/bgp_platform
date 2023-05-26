@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <numeric>
+#include <thread>
 #include <tuple>
 #include <vector>
 
@@ -29,6 +30,7 @@ OutageDataGenerator::OutageDataGenerator(const InitConfig& config)
                              config.proto_data_file_path.string());
   }
 
+  proto_data_file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
   auto outage_proto_data = jsoncons::csv::decode_csv<std::vector<
       std::tuple<std::underlying_type_t<AsNum>, TimeStamp, TimeStamp>>>(
       proto_data_file);
@@ -48,14 +50,76 @@ OutageDataGenerator::OutageDataGenerator(const InitConfig& config)
   logger.Info("Done.");
 }
 
+void OutageDataGenerator::Generate(fs::path route_data_path) {
+  if (!fs::exists(route_data_path)) {
+    throw std::invalid_argument("Route data path does not exist");
+  }
+
+  if (!fs::is_directory(route_data_path)) {
+    throw std::invalid_argument("Route data path is not a directory");
+  }
+
+  logger.Info("Finding Rib File...");
+  do {
+    std::vector<fs::path> files = ListAllFiles(route_data_path);
+    std::vector<fs::path> rib_files;
+    std::copy_if(begin(files), end(files), back_inserter(rib_files),
+                 [](const fs::path& path) {
+                   return StartsWith(path.filename().string(), "bview"sv);
+                 });
+    if (rib_files.empty()) {
+      logger.Info("No bview file found, waiting...");
+      std::this_thread::sleep_for(std::chrono::milliseconds(3600));
+      continue;
+    }
+    auto latest_rib_file = std::max_element(
+        rib_files.begin(), rib_files.end(),
+        [](const fs::path& path1, const fs::path& path2) {
+          return path1.filename().string() < path2.filename().string();
+        });
+    logger.Info("Found bview file: ", latest_rib_file->c_str());
+    this->route_data_.ReadRibFile(*latest_rib_file);
+    break;
+  } while (true);
+
+  {
+    logger.Info("Finding Update Files...");
+    std::vector<fs::path> files = ListAllFiles(route_data_path);
+    std::vector<fs::path> update_files;
+    std::copy_if(begin(files), end(files), back_inserter(update_files),
+                 [](const fs::path& path) {
+                   return StartsWith(path.filename().string(), "update"sv);
+                 });
+    std::sort(begin(update_files), end(update_files),
+              [](const fs::path& path1, const fs::path& path2) {
+                return path1.filename().string() < path2.filename().string();
+              });
+    for (const auto& update_file : update_files) {
+      logger.Info("Found update file: ", update_file.c_str());
+      try {
+        this->route_data_.ReadUpdateFile(update_file);
+      } catch (const std::exception& e) {
+        logger.Errorf("Failed to process update file {}! Exception: {}",
+                      update_file.c_str(), e.what());
+      }
+    }
+  }
+
+  logger.Info("Done.");
+}
+
 void OutageDataGenerator::OnRouteRemoved(AsNum owner_as, IPPrefix prefix,
                                          TimeStamp timestamp) {
   BGP_PLATFORM_UNUSED_PARAMETER(prefix);
+
+  logger.Debug("One route removed.");
 
   if (timestamp < this->start_monitor_time_ ||
       timestamp > this->end_monitor_time_) {
     return;
   }
+
+  logger.Debug("Checking outage...");
 
   if (auto as_outage_info_itr = this->outage_data_.find(owner_as);
       as_outage_info_itr != end(this->outage_data_)) {

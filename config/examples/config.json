@@ -1,10 +1,33 @@
 {
-    "init-data-path": {
-        "as-dict": "info/new_as_dict.json",
-        "top-nx": "info/top_nx.csv",
-        "top-ip": "info/top_ip.txt"
+    "outage_data_generator_config": {
+        "proto_data_path": "info/outage_data.csv",
+        "output_file_path": "info/labeled_outage_data.csv",
+        "start_monitor_time": {
+            "year": 2001,
+            "month": 11,
+            "day": 10,
+            "hour": 0,
+            "minute": 0,
+            "second": 0
+        },
+        "end_monitor_time": {
+            "year": 2002,
+            "month": 4,
+            "day": 5,
+            "hour": 0,
+            "minute": 0,
+            "second": 0
+        }
     },
-    "route-data-path": "~/data",
+    "init_data_path": {
+        "as_dict": "info/new_as_dict.json",
+        "top_nx": "info/top_nx.csv",
+        "top_ip": "info/top_ip.txt"
+    },
+    "route_data_path": "~/data",
+    "month": 1,
+    "start_day": 9,
+    "end_day": 10,
     "database": {
         "host": "localhost",
         "port": "5432",

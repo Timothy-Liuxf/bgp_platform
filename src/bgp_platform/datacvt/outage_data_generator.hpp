@@ -27,6 +27,7 @@ class OutageDataGenerator : RouteDataListener {
   };
 
   OutageDataGenerator(const InitConfig& config);
+  void Generate(fs::path route_data_path);
   void OnRouteRemoved(AsNum owner_as, IPPrefix prefix,
                       TimeStamp timestamp) override;
   void OnRouteAdded(AsNum owner_as, IPPrefix prefix,

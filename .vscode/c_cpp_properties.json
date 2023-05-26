@@ -11,7 +11,8 @@
                 "-Wall",
                 "-Wpedantic",
                 "-Wextra",
-                "-Werror"
+                "-Werror",
+                "-DSIMPLE_LOGGER_ENABLE_LOG_DEBUG"
             ],
             "includePath": [
                 ".",

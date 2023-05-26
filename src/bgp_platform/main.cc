@@ -71,13 +71,14 @@ int main(int argc, char* argv[]) {
       end_monitor_calendar.second   = end_monitor_time["second"].as<int>();
 
       OutageDataGenerator generator(OutageDataGenerator::InitConfig {
-          {init_data_path["as-dict"].as_string_view(),
-           init_data_path["top-nx"].as_string_view(),
-           init_data_path["top-ip"].as_string_view()},
-          outage_data_generator_config["proto-data-path"].as_string_view(),
-          init_data_path["output_file_path"].as_string_view(),
+          {init_data_path["as_dict"].as_string_view(),
+           init_data_path["top_nx"].as_string_view(),
+           init_data_path["top_ip"].as_string_view()},
+          outage_data_generator_config["proto_data_path"].as_string_view(),
+          outage_data_generator_config["output_file_path"].as_string_view(),
           TimePointToTimeStamp(ToTimePoint(start_monitor_calendar)),
           TimePointToTimeStamp(ToTimePoint(end_monitor_calendar))});
+      generator.Generate(config["route_data_path"].as_string_view());
     } else if (mode_arg.getValue() == MODE_DETECT) {
       const json& init_data_path = config["init_data_path"];
       const json& db_config      = config["database"];
