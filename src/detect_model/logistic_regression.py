@@ -7,6 +7,7 @@ import torch.optim as optim
 
 # logistic regression
 
+
 class LogisticRegression(nn.Module):
     def __init__(self):
         super(LogisticRegression, self).__init__()
@@ -26,26 +27,27 @@ class LogisticRegression(nn.Module):
         x = torch.sigmoid(self.fc5(x))
         return x
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--data_path', type=str, required=True, help='path to data')
-    args = parser.parse_args()
 
-    print(f"Using data: {args.data_path}")
-    
-    data_path: str = args.data_path
+def extract_data(data_path: str, out_train_data_path: str, out_test_data_path: str):
     input_data = []
     labels = []
+    print("Reading data...")
+    cnt = 0
     with open(data_path, 'r') as f:
         csvreader = csv.reader(f)
         next(csvreader)
         for row in csvreader:
             input_data.append([float(x) for x in row[1:]])
             labels.append([float(row[0])])
+            cnt += 1
+            if cnt % 1000000 == 0:
+                print(f"Reading {cnt} lines...")
     train_data = input_data[:int(len(input_data)*0.8)]
     train_labels = labels[:int(len(labels)*0.8)]
-    test_data = torch.tensor(input_data[int(len(input_data)*0.8):])
-    test_labels = torch.tensor(labels[int(len(labels)*0.8):])
+    test_data = input_data[int(len(input_data)*0.8):]
+    test_labels = labels[int(len(labels)*0.8):]
+
+    print("start to extract train data")
 
     # 提取出相同数量的 train_label 为 0 和 1 的训练集
     new_train_data = []
@@ -68,9 +70,98 @@ def main():
     for i in range(total_num):
         new_train_data.append(tmp_train_data[i])
         new_train_labels.append([0.0,])
-    
-    train_data = torch.tensor(new_train_data)
-    train_labels = torch.tensor(new_train_labels)
+
+    # 随机打乱 train_data 和 train_labels
+    tmp = list(zip(new_train_data, new_train_labels))
+    random.shuffle(tmp)
+    new_train_data, new_train_labels = zip(*tmp)
+
+    train_data = new_train_data
+    train_labels = new_train_labels
+
+    print("start to extract test data")
+
+    # 提取出相同数量的 test_label 为 0 和 1 的训练集
+    new_test_data = []
+    new_test_labels = []
+    # 将 label 为 1 的全部取出来
+    for i in range(len(test_labels)):
+        if test_labels[i][0] == 1:
+            new_test_data.append(test_data[i])
+            new_test_labels.append([1.0,])
+    total_num = len(new_test_labels)
+
+    # 随机取出与 label 为 1 相同数量的 label 为 0 的数据
+    tmp_test_data = []
+    for i in range(len(test_labels)):
+        if test_labels[i][0] == 0:
+            tmp_test_data.append(test_data[i])
+
+    # 从 tmp_test_data 中随机选出与 label 为 1 相同数量的数据
+    random.shuffle(tmp_test_data)
+    for i in range(total_num):
+        new_test_data.append(tmp_test_data[i])
+        new_test_labels.append([0.0,])
+
+    # 随机打乱 test_data 和 test_labels
+    tmp = list(zip(new_test_data, new_test_labels))
+    random.shuffle(tmp)
+    new_test_data, new_test_labels = zip(*tmp)
+
+    test_data = new_test_data
+    test_labels = new_test_labels
+
+    print("start to write data to csv file")
+
+    print("train_data size: ", len(train_data))
+    cnt = 0
+    with open('train_data.csv', 'w') as f:
+        csvwriter = csv.writer(f)
+        csvwriter.writerow(['label', 'x1', 'x2', 'x3', 'x4', 'x5', 'x6'])
+        for i in range(len(train_data)):
+            csvwriter.writerow([train_labels[i][0], train_data[i][0], train_data[i][1],
+                               train_data[i][2], train_data[i][3], train_data[i][4], train_data[i][5]])
+            cnt += 1
+            if cnt % 10000 == 0:
+                print(f"Writing {cnt} lines...")
+
+    print("test_data size: ", len(test_data))
+    cnt = 0
+    with open('test_data.csv', 'w') as f:
+        csvwriter = csv.writer(f)
+        csvwriter.writerow(['label', 'x1', 'x2', 'x3', 'x4', 'x5', 'x6'])
+        for i in range(len(test_data)):
+            csvwriter.writerow([test_labels[i][0], test_data[i][0], test_data[i][1],
+                               test_data[i][2], test_data[i][3], test_data[i][4], test_data[i][5]])
+            cnt += 1
+            if cnt % 10000 == 0:
+                print(f"Writing {cnt} lines...")
+
+
+def train(train_data_path: str, test_data_path: str):
+    with open(train_data_path, 'r') as f:
+        csvreader = csv.reader(f)
+        next(csvreader)
+        train_data = []
+        train_labels = []
+        for row in csvreader:
+            train_data.append([float(x) for x in row[1:]])
+            train_labels.append([float(row[0])])
+
+    train_data = torch.tensor(train_data)
+    train_labels = torch.tensor(train_labels)
+
+    with open(test_data_path, 'r') as f:
+        csvreader = csv.reader(f)
+        next(csvreader)
+        test_data = []
+        test_labels = []
+        for row in csvreader:
+            test_data.append([float(x) for x in row[1:]])
+            test_labels.append([float(row[0])])
+
+    test_data = torch.tensor(test_data)
+    test_labels = torch.tensor(test_labels)
 
     print("Finished loading data")
     print(f"train_data: {train_data.shape}")
@@ -89,11 +180,11 @@ def main():
     # define loss function and optimizer
     criterion = nn.BCELoss()  # cross entropy loss
     # Adam optimizer, L2 regularization (weight_decay parameter)
-    optimizer = optim.Adam(model.parameters(), lr=5e-4, weight_decay=0.001)
+    optimizer = optim.Adam(model.parameters(), lr=4e-4, weight_decay=1e-3)
 
     # train model
-    num_epochs = 40  # iteration times
-    batch_size = 256  # batch size
+    num_epochs = 20  # iteration times
+    batch_size = 4096  # batch size
 
     print("Start training")
 
@@ -101,6 +192,7 @@ def main():
         epoch_loss = 0.0
         num_batches = len(train_data) // batch_size
 
+        model.train()
         for batch in range(num_batches):
             start = batch * batch_size
             end = start + batch_size
@@ -122,7 +214,15 @@ def main():
             optimizer.step()
 
         # print loss of each epoch
-        print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {epoch_loss/num_batches:.4f}")
+        print(
+            f"Epoch [{epoch+1}/{num_epochs}], Loss: {epoch_loss/num_batches:.4f}")
+        # train accuracy
+        model.eval()
+        with torch.no_grad():
+            train_output = model(train_data)
+            train_pred = (train_output >= 0.5).float()
+            accuracy = (train_pred == train_labels).float().mean()
+            print(f"Accuracy on train set: {accuracy.item()*100:.2f}%")
 
     print("Finished training")
 
@@ -143,14 +243,43 @@ def main():
         print(f"Precision on test set: {precision.item()*100:.2f}%")
         print(f"Recall on test set: {recall.item()*100:.2f}%")
         # label 为 0 的数据中，预测为 0 的比例
-        print(f"Negative predictive value on test set: {(1-test_pred).sum()/(1-test_labels).sum()*100:.2f}%")
+        print(
+            f"Negative predictive value on test set: {((1-test_pred)*(1-test_labels)).sum()/(1-test_labels).sum()*100:.2f}%")
         # label 为 1 的数据中，预测为 1 的比例
-        print(f"Positive predictive value on test set: {(test_pred*test_labels).sum()/test_labels.sum()*100:.2f}%")
+        print(
+            f"Positive predictive value on test set: {(test_pred*test_labels).sum()/test_labels.sum()*100:.2f}%")
         # label 为 0 的数据中，预测为 1 的比例
-        print(f"False positive rate on test set: {(test_pred.sum()-(test_pred*test_labels).sum())/(1-test_labels).sum()*100:.2f}%")
+        print(
+            f"False positive rate on test set: {(test_pred.sum()-(test_pred*test_labels).sum())/(1-test_labels).sum()*100:.2f}%")
         # label 为 1 的数据中，预测为 0 的比例
-        print(f"False negative rate on test set: {(test_labels.sum()-(test_pred*test_labels).sum())/test_labels.sum()*100:.2f}%")
+        print(
+            f"False negative rate on test set: {(test_labels.sum()-(test_pred*test_labels).sum())/test_labels.sum()*100:.2f}%")
         print(f"F1 score on test set: {f1_score.item()*100:.2f}%")
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--data_path', type=str,
+                        required=False, help='path to data')
+    parser.add_argument('--train_data_path', type=str,
+                        required=False, help='path to train data')
+    parser.add_argument('--test_data_path', type=str,
+                        required=False, help='path to test data')
+    parser.add_argument('--extract', action='store_true',
+                        required=False, help='extract data')
+    args = parser.parse_args()
+
+    if args.extract:
+        if not args.data_path or not args.train_data_path or not args.test_data_path:
+            raise Exception(
+                'data_path or train_path or test_data_path is not provided')
+        extract_data(args.data_path, args.train_data_path, args.test_data_path)
+    else:
+        if not args.train_data_path or not args.test_data_path:
+            raise Exception(
+                'train_data_path or test_data_path is not provided')
+        train(args.train_data_path, args.test_data_path)
+
 
 if __name__ == '__main__':
     main()
