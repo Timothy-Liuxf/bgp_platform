@@ -97,7 +97,7 @@ def extract_data(data_path: str, out_train_data_path: str, out_test_data_path: s
         if test_labels[i][0] == 0:
             tmp_test_data.append(test_data[i])
 
-    total_num = min(len(new_test_labels) * 3, len(tmp_test_data))
+    total_num = min(len(new_test_labels) * 10, len(tmp_test_data))
 
     # 从 tmp_test_data 中随机选出与 label 为 1 相同数量的数据
     random.shuffle(tmp_test_data)
@@ -272,7 +272,6 @@ def train(train_data_path: str, test_data_path: str):
         print(
             f"False negative rate on test set: {(test_labels.sum()-(test_pred*test_labels).sum())/test_labels.sum()*100:.2f}%")
         print(f"F1 score on test set: {f1_score.item()*100:.2f}%")
-
 
 def main():
     parser = argparse.ArgumentParser()
