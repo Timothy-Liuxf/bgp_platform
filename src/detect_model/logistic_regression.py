@@ -236,6 +236,12 @@ def train(train_data_path: str, test_data_path: str):
 
     print("Finished training")
 
+    # print model parameters
+    print("Model parameters:")
+    for name, param in model.named_parameters():
+        if param.requires_grad:
+            print(name, param.data)
+
     # evaluation mode on test data
     # calculate accuracy, precision, recall, f1-score
     model.eval()
