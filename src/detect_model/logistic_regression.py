@@ -11,18 +11,18 @@ import torch.optim as optim
 class LogisticRegression(nn.Module):
     def __init__(self):
         super(LogisticRegression, self).__init__()
-        self.fc1 = nn.Linear(6, 16)
-        # self.fc2 = nn.Linear(128, 64)
-        # self.fc3 = nn.Linear(64, 32)
-        self.fc4 = nn.Linear(16, 8)
-        self.fc5 = nn.Linear(8, 1)
-        self.dropout = nn.Dropout(0.01)
+        self.fc1 = nn.Linear(6, 64)
+        # self.fc2 = nn.Linear(256, 64)
+        # self.fc3 = nn.Linear(64, 16)
+        # self.fc4 = nn.Linear(16, 8)
+        self.fc5 = nn.Linear(64, 1)
+        self.dropout = nn.Dropout(0.1)
 
     def forward(self, x):
         x = torch.relu(self.fc1(x))
         # x = torch.relu(self.fc2(x))
         # x = torch.relu(self.fc3(x))
-        x = torch.relu(self.fc4(x))
+        # x = torch.relu(self.fc4(x))
         x = self.dropout(x)
         x = torch.sigmoid(self.fc5(x))
         return x
@@ -57,13 +57,14 @@ def extract_data(data_path: str, out_train_data_path: str, out_test_data_path: s
         if train_labels[i][0] == 1:
             new_train_data.append(train_data[i])
             new_train_labels.append([1.0,])
-    total_num = len(new_train_labels)
 
     # 随机取出与 label 为 1 相同数量的 label 为 0 的数据
     tmp_train_data = []
     for i in range(len(train_labels)):
         if train_labels[i][0] == 0:
             tmp_train_data.append(train_data[i])
+
+    total_num = min(len(new_train_labels), len(tmp_train_data))
 
     # 从 tmp_train_data 中随机选出与 label 为 1 相同数量的数据
     random.shuffle(tmp_train_data)
@@ -89,13 +90,14 @@ def extract_data(data_path: str, out_train_data_path: str, out_test_data_path: s
         if test_labels[i][0] == 1:
             new_test_data.append(test_data[i])
             new_test_labels.append([1.0,])
-    total_num = len(new_test_labels)
 
     # 随机取出与 label 为 1 相同数量的 label 为 0 的数据
     tmp_test_data = []
     for i in range(len(test_labels)):
         if test_labels[i][0] == 0:
             tmp_test_data.append(test_data[i])
+
+    total_num = min(len(new_test_labels) * 3, len(tmp_test_data))
 
     # 从 tmp_test_data 中随机选出与 label 为 1 相同数量的数据
     random.shuffle(tmp_test_data)
@@ -180,10 +182,14 @@ def train(train_data_path: str, test_data_path: str):
     # define loss function and optimizer
     criterion = nn.BCELoss()  # cross entropy loss
     # Adam optimizer, L2 regularization (weight_decay parameter)
-    optimizer = optim.Adam(model.parameters(), lr=4e-4, weight_decay=1e-3)
+    learning_rate = 1e-3
+    weight_decay = 1e-4
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    # other optimizers
+    # optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9, weight_decay=weight_decay)
 
     # train model
-    num_epochs = 20  # iteration times
+    num_epochs = 60  # iteration times
     batch_size = 4096  # batch size
 
     print("Start training")
@@ -201,28 +207,32 @@ def train(train_data_path: str, test_data_path: str):
             batch_data = train_data[start:end]
             batch_labels = train_labels[start:end]
 
+            # clear gradients of all parameters
+            optimizer.zero_grad()
+
             # forward propagation
             output = model(batch_data)
 
             # Calculate loss
             loss = criterion(output, batch_labels)
+            loss.backward()
             epoch_loss += loss.item()
 
             # backward propagation and optimization
-            optimizer.zero_grad()
-            loss.backward()
+            # optimizer.zero_grad()
+            # loss.backward()
             optimizer.step()
 
         # print loss of each epoch
         print(
             f"Epoch [{epoch+1}/{num_epochs}], Loss: {epoch_loss/num_batches:.4f}")
         # train accuracy
-        model.eval()
-        with torch.no_grad():
-            train_output = model(train_data)
-            train_pred = (train_output >= 0.5).float()
-            accuracy = (train_pred == train_labels).float().mean()
-            print(f"Accuracy on train set: {accuracy.item()*100:.2f}%")
+        # model.eval()
+        # with torch.no_grad():
+        #     train_output = model(train_data)
+        #     train_pred = (train_output >= 0.5).float()
+        #     accuracy = (train_pred == train_labels).float().mean()
+        #     print(f"Accuracy on train set: {accuracy.item()*100:.2f}%")
 
     print("Finished training")
 
@@ -239,6 +249,7 @@ def train(train_data_path: str, test_data_path: str):
         print(f"test_data: {len(test_data)}")
         print(f"test_pred: {test_pred.sum()}")
         print(f"test_labels: {test_labels.sum()}")
+        print(f"test_pred*test_labels: {(test_pred*test_labels).sum()}")
         print(f"Accuracy on test set: {accuracy.item()*100:.2f}%")
         print(f"Precision on test set: {precision.item()*100:.2f}%")
         print(f"Recall on test set: {recall.item()*100:.2f}%")
