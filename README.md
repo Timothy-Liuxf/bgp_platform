@@ -23,7 +23,33 @@ $ cd bgp_platform
 $ git submodule update --init --recursive
 ```
 
-### Configure build system
+### Build with Docker (Recommended)
+
+#### Build base image
+
+```bash
+$ docker build . -f Dockerfile.base -t <base image name>
+```
+
+#### Build target image
+
+1. Open `Dockerfile`:
+
+  ```Dockerfile
+  FROM timothyliuxf/bgp_platform_base AS builder
+  ```
+  
+  Then change `timothyliuxf/bgp_platform_base` to `<base image name>` you set in the previous step.
+
+2. Build the target image:
+
+  ```bash
+  $ docker build . -t <target image name>
+  ```
+
+### Build on a local machine
+
+#### Configure build system
 
 ```bash
 # Requires GNU Autoconf and GNU Automake
@@ -39,7 +65,7 @@ The `ENV` and `VAL` can be:
   + `Release` / `release` (default): Release configuration.
 + `CXX`: The C++ compiler to use. The default value is `g++`.
 
-### Build the target
+#### Build the target
 
 ```bash
 $ make -j$(nproc)
