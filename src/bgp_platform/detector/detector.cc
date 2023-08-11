@@ -27,10 +27,10 @@
 BGP_PLATFORM_NAMESPACE_BEGIN
 
 namespace {
-constexpr auto PREFIX_OUTAGE_THRESHOLD  = 0.8;
-constexpr auto PREFIX_RESTORE_THRESHOLD = 0.8;
-constexpr auto AS_OUTAGE_THRESHOLD      = 0.8;
-constexpr auto AS_RESTORE_THRESHOLD     = 0.8;
+[[maybe_unused]] constexpr auto PREFIX_OUTAGE_THRESHOLD  = 0.8;
+[[maybe_unused]] constexpr auto PREFIX_RESTORE_THRESHOLD = 0.8;
+[[maybe_unused]] constexpr auto AS_OUTAGE_THRESHOLD      = 0.8;
+[[maybe_unused]] constexpr auto AS_RESTORE_THRESHOLD     = 0.8;
 }  // namespace
 
 void Detector::Detect(fs::path route_data_path) {
