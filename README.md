@@ -13,6 +13,7 @@
 
 ```bash
 $ git clone --recursive https://github.com/Timothy-Liuxf/bgp_platform.git
+$ cd bgp_platform
 ```
 
 or
