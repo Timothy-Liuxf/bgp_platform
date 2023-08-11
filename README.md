@@ -8,6 +8,11 @@
 + C++ compiler which supports C++17
 + GNU Autoconf and GNU Automake
 + `libpq` and `libpqxx-6.4`
++ Python 3
+
+or
+
++ Docker
 
 ### Clone this repository
 
