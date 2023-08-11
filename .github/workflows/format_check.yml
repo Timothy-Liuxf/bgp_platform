@@ -1,0 +1,14 @@
+name: format_check
+on: [push, pull_request]
+jobs:
+  clang-format-checking:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: DoozyX/clang-format-lint-action@v0.15
+        with:
+          source: "./src"
+          extensions: "c,h,C,H,cpp,hpp,cc,hh,c++,h++,cxx,hxx,i,ixx,ipp,i++"
+          clangFormatVersion: 14
+          exclude: "./players"
+          inplace: False
