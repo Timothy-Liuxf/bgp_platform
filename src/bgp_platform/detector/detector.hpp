@@ -1,6 +1,7 @@
 #ifndef BGP_PLATFORM_DETECTOR_DETECTOR_HPP_
 #define BGP_PLATFORM_DETECTOR_DETECTOR_HPP_
 
+#include <filesystem>
 #include <optional>
 #include <unordered_map>
 #include <utility>
@@ -26,12 +27,20 @@ class Detector : public RouteDataListener {
     std::string_view database;
   };
 
+  struct DetectorConfig {
+    std::filesystem::path input_cache_path;
+    std::filesystem::path output_cache_path;
+    std::filesystem::path model_path;
+  };
+
   Detector(const InitInfoFilePath& init_info_file_path,
-           const DatabaseConfig&   database_config)
+           const DatabaseConfig&   database_config,
+           const DetectorConfig&   detector_config)
       : route_data_(*this, init_info_file_path),
         database_(database_config.host, database_config.port,
                   database_config.user, database_config.password,
-                  database_config.database) {}
+                  database_config.database),
+        detector_config_(detector_config) {}
   Detector(const Detector&) = delete;
 
   void         Detect(fs::path route_data_path);
@@ -44,6 +53,7 @@ class Detector : public RouteDataListener {
   RouteData          route_data_;
   database::Database database_;
   OutageEvent        outage_events_;
+  DetectorConfig     detector_config_;
 
  private:
   [[nodiscard]] bool InBlackList(const IPPrefix&) const { return false; }

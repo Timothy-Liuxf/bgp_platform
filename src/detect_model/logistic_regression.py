@@ -117,7 +117,7 @@ def extract_data(data_path: str, out_train_data_path: str, out_test_data_path: s
 
     print("train_data size: ", len(train_data))
     cnt = 0
-    with open('train_data.csv', 'w') as f:
+    with open(out_train_data_path, 'w') as f:
         csvwriter = csv.writer(f)
         csvwriter.writerow(['label', 'x1', 'x2', 'x3', 'x4', 'x5', 'x6'])
         for i in range(len(train_data)):
@@ -129,7 +129,7 @@ def extract_data(data_path: str, out_train_data_path: str, out_test_data_path: s
 
     print("test_data size: ", len(test_data))
     cnt = 0
-    with open('test_data.csv', 'w') as f:
+    with open(out_test_data_path, 'w') as f:
         csvwriter = csv.writer(f)
         csvwriter.writerow(['label', 'x1', 'x2', 'x3', 'x4', 'x5', 'x6'])
         for i in range(len(test_data)):
@@ -140,7 +140,7 @@ def extract_data(data_path: str, out_train_data_path: str, out_test_data_path: s
                 print(f"Writing {cnt} lines...")
 
 
-def train(train_data_path: str, test_data_path: str):
+def train(train_data_path: str, model_path: str):
     with open(train_data_path, 'r') as f:
         csvreader = csv.reader(f)
         next(csvreader)
@@ -152,18 +152,6 @@ def train(train_data_path: str, test_data_path: str):
 
     train_data = torch.tensor(train_data)
     train_labels = torch.tensor(train_labels)
-
-    with open(test_data_path, 'r') as f:
-        csvreader = csv.reader(f)
-        next(csvreader)
-        test_data = []
-        test_labels = []
-        for row in csvreader:
-            test_data.append([float(x) for x in row[1:]])
-            test_labels.append([float(row[0])])
-
-    test_data = torch.tensor(test_data)
-    test_labels = torch.tensor(test_labels)
 
     print("Finished loading data")
     print(f"train_data: {train_data.shape}")
@@ -184,7 +172,8 @@ def train(train_data_path: str, test_data_path: str):
     # Adam optimizer, L2 regularization (weight_decay parameter)
     learning_rate = 1e-3
     weight_decay = 1e-4
-    optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    optimizer = optim.Adam(
+        model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     # other optimizers
     # optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9, weight_decay=weight_decay)
 
@@ -242,8 +231,27 @@ def train(train_data_path: str, test_data_path: str):
         if param.requires_grad:
             print(name, param.data)
 
+    # save model
+    torch.save(model.state_dict(), model_path)
+
+def test(test_data_path: str, model_path: str):
+    with open(test_data_path, 'r') as f:
+        csvreader = csv.reader(f)
+        next(csvreader)
+        test_data = []
+        test_labels = []
+        for row in csvreader:
+            test_data.append([float(x) for x in row[1:]])
+            test_labels.append([float(row[0])])
+
+    test_data = torch.tensor(test_data)
+    test_labels = torch.tensor(test_labels)
+
     # evaluation mode on test data
     # calculate accuracy, precision, recall, f1-score
+    # load model
+    model = LogisticRegression()
+    model.load_state_dict(torch.load(model_path))
     model.eval()
     with torch.no_grad():
         test_output = model(test_data)
@@ -273,6 +281,78 @@ def train(train_data_path: str, test_data_path: str):
             f"False negative rate on test set: {(test_labels.sum()-(test_pred*test_labels).sum())/test_labels.sum()*100:.2f}%")
         print(f"F1 score on test set: {f1_score.item()*100:.2f}%")
 
+        # [2]
+        for rate in (0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9):
+            rule_pred = list()
+            for i in range(len(test_labels)):
+                ratio = test_data[i][2]
+                if ratio >= rate:
+                    rule_pred.append([1.0,])
+                else:
+                    rule_pred.append([0.0,])
+            rule_pred = torch.tensor(rule_pred)
+
+            rule_based_accuracy = (test_pred == rule_pred).float().mean()
+            rule_based_precision = (
+                test_pred * rule_pred).sum() / test_pred.sum()
+            rule_based_recall = (test_pred * rule_pred).sum() / rule_pred.sum()
+            rule_based_f1_score = 2 * rule_based_precision * \
+                rule_based_recall / (rule_based_precision + rule_based_recall)
+            print(rate)
+            print(
+                f"Accuracy on test set: {rule_based_accuracy.item()*100:.2f}%")
+            print(
+                f"Precision on test set: {rule_based_precision.item()*100:.2f}%")
+            print(f"Recall on test set: {rule_based_recall.item()*100:.2f}%")
+            # rule 为 0 的数据中，预测为 0 的比例
+            print(
+                f"Negative predictive value on test set: {((1-test_pred)*(1-rule_pred)).sum()/(1-rule_pred).sum()*100:.2f}%")
+            # rule 为 1 的数据中，预测为 1 的比例
+            print(
+                f"Positive predictive value on test set: {(test_pred*rule_pred).sum()/rule_pred.sum()*100:.2f}%")
+            # rule 为 0 的数据中，预测为 1 的比例
+            print(
+                f"False positive rate on test set: {(test_pred.sum()-(test_pred*rule_pred).sum())/(1-rule_pred).sum()*100:.2f}%")
+            # rule 为 1 的数据中，预测为 0 的比例
+            print(
+                f"False negative rate on test set: {(rule_pred.sum()-(test_pred*rule_pred).sum())/rule_pred.sum()*100:.2f}%")
+            print(
+                f"F1 score on test set: {rule_based_f1_score.item()*100:.2f}%")
+
+            print(
+                f"Rule accuracy on test set: {((rule_pred == test_labels).float()).mean().item()*100:.2f}%")
+            print(
+                f"Rule precision on test set: {((rule_pred * test_labels).sum() / rule_pred.sum()).item()*100:.2f}%")
+            print(
+                f"Rule recall on test set: {((rule_pred * test_labels).sum() / test_labels.sum()).item()*100:.2f}%")
+            # F-Score
+            print(f"Rule F1 score on test set: {(2 * ((rule_pred * test_labels).sum() / rule_pred.sum()) * ((rule_pred * test_labels).sum() / test_labels.sum()) / (((rule_pred * test_labels).sum() / rule_pred.sum()) + ((rule_pred * test_labels).sum() / test_labels.sum()))).item()*100:.2f}%")
+            # rule 为 0 的数据中，预测为 1 的比例
+            print(
+                f"Rule False positive rate on test set: {(rule_pred.sum()-(rule_pred*test_labels).sum())/(1-test_labels).sum()*100:.2f}%")
+
+def evaluate(eval_data_path: str, model_path: str, output_path: str):
+    with open(eval_data_path, 'r') as f:
+        csvreader = csv.reader(f)
+        eval_data = []
+        for row in csvreader:
+            eval_data.append([float(x) for x in row[:]])
+
+    eval_data = torch.tensor(eval_data)
+
+    # evaluation mode on test data
+    # calculate accuracy, precision, recall, f1-score
+    # load model
+    model = LogisticRegression()
+    model.load_state_dict(torch.load(model_path))
+    model.eval()
+    with torch.no_grad():
+        eval_output = model(eval_data)
+    
+    with open(output_path, 'w') as f:
+        for i in range(len(eval_output)):
+            f.write(f"{eval_output[i][0]}\n")
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_path', type=str,
@@ -281,8 +361,20 @@ def main():
                         required=False, help='path to train data')
     parser.add_argument('--test_data_path', type=str,
                         required=False, help='path to test data')
+    parser.add_argument('--eval_data_path', type=str,
+                        required=False, help='path to evaluate data')
+    parser.add_argument('--output_path', type=str,
+                        required=False, help='path to output')
     parser.add_argument('--extract', action='store_true',
                         required=False, help='extract data')
+    parser.add_argument('--train', action='store_true',
+                        required=False, help='train model')
+    parser.add_argument('--test', action='store_true',
+                        required=False, help='test model')
+    parser.add_argument('--eval', action='store_true',
+                        required=False, help='evaluate')
+    parser.add_argument('--model_path', type=str,
+                        required=False, help='path to model')
     args = parser.parse_args()
 
     if args.extract:
@@ -290,11 +382,23 @@ def main():
             raise Exception(
                 'data_path or train_path or test_data_path is not provided')
         extract_data(args.data_path, args.train_data_path, args.test_data_path)
-    else:
-        if not args.train_data_path or not args.test_data_path:
+    elif args.train:
+        if not args.train_data_path or not args.model_path:
             raise Exception(
-                'train_data_path or test_data_path is not provided')
-        train(args.train_data_path, args.test_data_path)
+                'train_data_path or model_path is not provided')
+        train(args.train_data_path, args.model_path)
+    elif args.test:
+        if not args.test_data_path or not args.model_path:
+            raise Exception('test_data_path or model_path is not provided')
+        test(args.test_data_path, args.model_path)
+    elif args.eval:
+        if not args.eval_data_path or not args.model_path:
+            raise Exception('eval_data_path or model_path is not provided')
+        if not args.output_path:
+            raise Exception('output_path is not provided')
+        evaluate(args.eval_data_path, args.model_path, args.output_path)
+    else:
+        raise Exception('No action is provided')
 
 
 if __name__ == '__main__':

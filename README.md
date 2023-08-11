@@ -54,5 +54,5 @@ Write configurations in `config/config.json`. Take [`config/examples/config.json
 ### Run the program
 
 ```bash
-$ ./build/bin/bgp_platform
+$ ./build/bin/bgp_platform [options]
 ```

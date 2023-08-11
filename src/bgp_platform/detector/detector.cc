@@ -2,8 +2,10 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <numeric>
 #include <regex>
 #include <sstream>
 #include <stdexcept>
@@ -108,7 +110,7 @@ void Detector::OnRouteRemoved(AsNum owner_as, IPPrefix prefix,
                               TimeStamp timestamp) {
   logger.Debug("Checking outages...");
 
-  this->CheckPrefixOutage(owner_as, prefix, timestamp);
+  // this->CheckPrefixOutage(owner_as, prefix, timestamp);
   this->CheckASOutage(owner_as, prefix, timestamp);
   auto country = this->route_data_.GetAsCountry(owner_as);
   if (!country.empty()) {
@@ -256,85 +258,187 @@ void Detector::CheckPrefixOutage(AsNum owner_as, IPPrefix prefix,
 void Detector::CheckASOutage(AsNum owner_as, IPPrefix prefix,
                              TimeStamp timestamp) {
   BGP_PLATFORM_UNUSED_PARAMETER(prefix);
-  logger.Debug("Checking AS outage...");
+  try {
+    logger.Debug("Checking AS outage...");
 
-  if (auto owner_as_route_info_ptr = this->route_data_.GetASRouteInfo(owner_as);
-      owner_as_route_info_ptr != nullptr) {
-    auto& owner_as_route_info = *owner_as_route_info_ptr;
-    auto  outage_prefix_num   = owner_as_route_info.outage_prefixes.size();
-    auto  normal_prefix_num   = owner_as_route_info.normal_prefixes.size();
-    auto  timepoint           = TimeStampToTimePoint(timestamp);
-    if (!owner_as_route_info.is_outage) {
-      logger.Debug("AS is not outage. Check outage.");
-      if (outage_prefix_num >
-          (outage_prefix_num + normal_prefix_num) * AS_OUTAGE_THRESHOLD) {
-        // Outage
-        logger.Debug("A new AS outaged.");
-        owner_as_route_info.is_outage = true;
+    auto as_route_info = this->route_data_.GetASRouteInfo(owner_as);
+    if (as_route_info != nullptr) {
+      logger.Debug("AS {} has route info.", ToUnderlying(owner_as));
 
-        // Check if need to reset outage id
-        // If the month of the last outage end time is not equal to the
-        // current month, reset the outage id
-        if (owner_as_route_info.last_outage_start_time != TimePoint {} &&
-            ToUTCTime(owner_as_route_info.last_outage_start_time).month !=
-                ToUTCTime(timepoint).month) {
-          owner_as_route_info.outage_id = {};
+      std::size_t as_withdrawed_path_count = 0, as_normal_path_count = 0;
+      std::size_t collector_unreachable_vps = 0, collector_reachable_vps = 0;
+      std::size_t unreachable_prefix = 0, reachable_prefix = 0;
+      for (auto& prefix_route_pair : as_route_info->prefixes) {
+        auto& prefix_route_info = prefix_route_pair.second;
+        as_withdrawed_path_count +=
+            std::accumulate(begin(prefix_route_info.withdrawed_vp_paths),
+                            end(prefix_route_info.withdrawed_vp_paths), 0,
+                            [](auto count, auto& vp_path_pair) {
+                              return count + vp_path_pair.second.size();
+                            });
+        as_normal_path_count += std::accumulate(
+            begin(prefix_route_info.vp_paths), end(prefix_route_info.vp_paths),
+            0, [](auto count, auto& vp_path_pair) {
+              return count + vp_path_pair.second.size();
+            });
+        collector_unreachable_vps += prefix_route_info.unreachable_vps.size();
+        collector_reachable_vps += prefix_route_info.reachable_vps.size();
+        if (prefix_route_info.reachable_vps.empty()) {
+          ++unreachable_prefix;
+        } else {
+          ++reachable_prefix;
+        }
+      }
+      double as_withdrawed_path_ratio =
+          as_normal_path_count + as_withdrawed_path_count == 0
+              ? 0.0
+              : static_cast<double>(as_withdrawed_path_count) /
+                    (as_normal_path_count + as_withdrawed_path_count);
+      double collector_unreachable_vp_ratio =
+          collector_reachable_vps + collector_unreachable_vps == 0
+              ? 0.0
+              : static_cast<double>(collector_unreachable_vps) /
+                    (collector_reachable_vps + collector_unreachable_vps);
+      double unreachable_prefix_ratio =
+          unreachable_prefix + reachable_prefix == 0
+              ? 0.0
+              : static_cast<double>(unreachable_prefix) /
+                    (unreachable_prefix + reachable_prefix);
+
+      if (auto owner_as_route_info_ptr =
+              this->route_data_.GetASRouteInfo(owner_as);
+          owner_as_route_info_ptr != nullptr) {
+        auto& owner_as_route_info = *owner_as_route_info_ptr;
+        auto  outage_prefix_num   = owner_as_route_info.outage_prefixes.size();
+        auto  normal_prefix_num   = owner_as_route_info.normal_prefixes.size();
+        auto  timepoint           = TimeStampToTimePoint(timestamp);
+
+        {
+          std::ofstream input_data(this->detector_config_.input_cache_path);
+          if (!input_data) {
+            throw std::runtime_error("Failed to open input cache file!");
+          }
+          input_data << fmt::format(
+                            "{},{},{},{},{},{}", as_withdrawed_path_ratio,
+                            as_normal_path_count + as_withdrawed_path_count,
+                            collector_unreachable_vp_ratio,
+                            collector_reachable_vps + collector_unreachable_vps,
+                            unreachable_prefix_ratio,
+                            unreachable_prefix + reachable_prefix)
+                     << std::endl;
         }
 
-        // Update country info
-        logger.Debug("Check updating country information.");
-        auto country = this->route_data_.GetAsCountry(owner_as);
-        if (!country.empty()) {
-          auto& country_info =
-              this->route_data_.GetOrInsertCountryRouteInfo(country);
-          if (auto owner_as_in_normal_ass_itr =
-                  country_info.normal_ass.find(owner_as);
-              owner_as_in_normal_ass_itr != end(country_info.normal_ass)) {
-            country_info.normal_ass.erase(owner_as_in_normal_ass_itr);
-            country_info.outage_ass.insert(owner_as);
+        {
+          using namespace fmt::literals;
+          int exit_code = std::system(
+              fmt::format(
+                  "python3 ./src/detect_model/logistic_regression.py "
+                  "--eval "
+                  "--eval_data_path={eval_data_path} "
+                  "--output_path={output_path}"
+                  "--model_path={model_path}",
+                  "eval_data_path"_a =
+                      this->detector_config_.input_cache_path.string(),
+                  "output_path"_a =
+                      this->detector_config_.output_cache_path.string(),
+                  "model_path"_a = this->detector_config_.model_path.string())
+                  .c_str());
+          if (exit_code != 0) {
+            throw std::runtime_error(
+                "Failed to run logistic regression model!");
+          }
+
+          std::ifstream output_data(this->detector_config_.output_cache_path);
+          if (!output_data) {
+            throw std::runtime_error("Failed to open output cache file!");
+          }
+          int is_outage;
+          output_data >> is_outage;
+          if (!output_data) {
+            throw std::runtime_error("Failed to read output cache file!");
+          }
+
+          if (!owner_as_route_info.is_outage) {
+            logger.Debug("AS is not outage. Check outage.");
+            if (is_outage != 0) {
+              // Outage
+              logger.Debug("A new AS outaged.");
+              owner_as_route_info.is_outage = true;
+
+              // Check if need to reset outage id
+              // If the month of the last outage end time is not equal to the
+              // current month, reset the outage id
+              if (owner_as_route_info.last_outage_start_time != TimePoint {} &&
+                  ToUTCTime(owner_as_route_info.last_outage_start_time).month !=
+                      ToUTCTime(timepoint).month) {
+                owner_as_route_info.outage_id = {};
+              }
+
+              // Update country info
+              logger.Debug("Check updating country information.");
+              auto country = this->route_data_.GetAsCountry(owner_as);
+              if (!country.empty()) {
+                auto& country_info =
+                    this->route_data_.GetOrInsertCountryRouteInfo(country);
+                if (auto owner_as_in_normal_ass_itr =
+                        country_info.normal_ass.find(owner_as);
+                    owner_as_in_normal_ass_itr !=
+                    end(country_info.normal_ass)) {
+                  country_info.normal_ass.erase(owner_as_in_normal_ass_itr);
+                  country_info.outage_ass.insert(owner_as);
+                }
+              }
+
+              // Record AS outage info
+              logger.Debug("Recording AS outage information...");
+              ID   as_outage_id    = ++owner_as_route_info.outage_id;
+              auto as_outage_event = database::models::ASOutageEvent {
+                  {
+                      owner_as,
+                      as_outage_id,
+                  },
+                  {
+                      country,  // TODO: change to Chinese name
+                      this->route_data_.GetAsAutName(owner_as),
+                      this->route_data_.GetAsOrgName(owner_as),
+                      this->route_data_.GetAsType(owner_as),
+                      timepoint,
+                      std::nullopt,
+                      std::nullopt,
+                      outage_prefix_num + normal_prefix_num,
+                      outage_prefix_num,
+                      (double)outage_prefix_num /
+                          (outage_prefix_num + normal_prefix_num),
+                      {},  // TODO: Record pre_vp_paths
+                      {},  // TODO: Record eve_vp_paths
+                      {begin(owner_as_route_info.outage_prefixes),
+                       end(owner_as_route_info.outage_prefixes)},
+                      "",  // TODO: Record outage_level
+                      "",  // TODO: Record outage_level_description
+                  }};
+              logger.Debug("Uploading AS outage event to database.");
+              auto table_name =
+                  this->database_.InsertASOutageEvent(as_outage_event);
+              this->outage_events_.as[std::move(as_outage_event.key)] = {
+                  std::move(table_name), false,
+                  std::move(as_outage_event.value)};
+              logger.Debug("Recorded AS outage event.");
+            }
+          } else {
+            logger.Debug(
+                "AS is outage. Check restoration (Not implemented yet).");
+            if (is_outage == 0) {
+              // TODO: Restoration in database
+            }
           }
         }
-
-        // Record AS outage info
-        logger.Debug("Recording AS outage information...");
-        ID   as_outage_id    = ++owner_as_route_info.outage_id;
-        auto as_outage_event = database::models::ASOutageEvent {
-            {
-                owner_as,
-                as_outage_id,
-            },
-            {
-                country,  // TODO: change to Chinese name
-                this->route_data_.GetAsAutName(owner_as),
-                this->route_data_.GetAsOrgName(owner_as),
-                this->route_data_.GetAsType(owner_as),
-                timepoint,
-                std::nullopt,
-                std::nullopt,
-                outage_prefix_num + normal_prefix_num,
-                outage_prefix_num,
-                (double)outage_prefix_num /
-                    (outage_prefix_num + normal_prefix_num),
-                {},  // TODO: Record pre_vp_paths
-                {},  // TODO: Record eve_vp_paths
-                {begin(owner_as_route_info.outage_prefixes),
-                 end(owner_as_route_info.outage_prefixes)},
-                "",  // TODO: Record outage_level
-                "",  // TODO: Record outage_level_description
-            }};
-        logger.Debug("Uploading AS outage event to database.");
-        auto table_name = this->database_.InsertASOutageEvent(as_outage_event);
-        this->outage_events_.as[std::move(as_outage_event.key)] = {
-            std::move(table_name), false, std::move(as_outage_event.value)};
-        logger.Debug("Recorded AS outage event.");
       }
-    } else {
-      // TODO
-      logger.Debug("AS is outage. Check restoration (Not implemented yet).");
+      logger.Debug("Finish checking AS outage.");
+      return;
     }
+  } catch (std::exception& e) {
+    logger.Error("Failed to check AS outage: ", e.what());
   }
-  logger.Debug("Finish checking AS outage.");
-  return;
 }
 
 BGP_PLATFORM_NAMESPACE_END

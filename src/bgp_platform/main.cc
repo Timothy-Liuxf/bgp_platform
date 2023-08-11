@@ -80,8 +80,9 @@ int main(int argc, char* argv[]) {
           TimePointToTimeStamp(ToTimePoint(end_monitor_calendar))});
       generator.Generate(config["route_data_path"].as_string_view());
     } else if (mode_arg.getValue() == MODE_DETECT) {
-      const json& init_data_path = config["init_data_path"];
-      const json& db_config      = config["database"];
+      const json& init_data_path  = config["init_data_path"];
+      const json& db_config       = config["database"];
+      const json& detector_config = config["detector"];
 
       Detector    detector({init_data_path["as_dict"].as_string_view(),
                             init_data_path["top_nx"].as_string_view(),
@@ -90,13 +91,15 @@ int main(int argc, char* argv[]) {
                             db_config["port"].as_string_view(),
                             db_config["user"].as_string_view(),
                             db_config["password"].as_string_view(),
-                            db_config["database"].as_string_view()});
+                            db_config["database"].as_string_view()},
+                           {detector_config["input_cache_path"].as_string_view(),
+                            detector_config["output_cache_path"].as_string_view(),
+                            detector_config["model_path"].as_string_view()});
       detector.Detect(config["route_data_path"].as_string_view());
     } else {
       logger.Error("Invalid mode: ", mode_arg.getValue());
       return 1;
     }
-
   } catch (std::exception& e) {
     logger.Error(e.what());
     return 1;

@@ -34,5 +34,10 @@
         "user": "testuser",
         "password": "testpasswd",
         "database": "testdb"
+    },
+    "detector": {
+        "input_cache_path": "/tmp/bgp_platform_input_cache.csv",
+        "output_cache_path": "/tmp/bgp_platform_output_cache.csv",
+        "model_path": "info/model.pkl"
     }
 }
