@@ -3,5 +3,3 @@ FROM pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime
 WORKDIR /app
 RUN apt-get update -y && apt-get install -y nano
 COPY ./src/detect_model .
-
-CMD [ "python3", "detect_model/logistic_regression.py", "--data_path", "/data/labeled_outage_data.csv" ]
