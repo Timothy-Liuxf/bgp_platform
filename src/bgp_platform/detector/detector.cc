@@ -335,7 +335,7 @@ void Detector::CheckASOutage(AsNum owner_as, IPPrefix prefix,
                   "python3 ./src/detect_model/logistic_regression.py "
                   "--eval "
                   "--eval_data_path={eval_data_path} "
-                  "--output_path={output_path}"
+                  "--output_path={output_path} "
                   "--model_path={model_path}",
                   "eval_data_path"_a =
                       this->detector_config_.input_cache_path.string(),
