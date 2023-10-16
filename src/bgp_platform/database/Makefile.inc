@@ -9,5 +9,5 @@ build_lib_libdatabase_a_SOURCES =                                              \
     %reldir%/database.cc                                                       \
     ${NOTHING}
 
-include %reldir%/models/Makefile.inc.am
-include %reldir%/sql/Makefile.inc.am
+include %reldir%/models/Makefile.inc
+include %reldir%/sql/Makefile.inc

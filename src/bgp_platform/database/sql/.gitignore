@@ -9,4 +9,4 @@
 
 # Except Makefiles
 !Makefile.am
-!Makefile.inc.am
+!Makefile.inc

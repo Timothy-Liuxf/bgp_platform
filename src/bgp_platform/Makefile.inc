@@ -1,9 +1,9 @@
-include %reldir%/utils/Makefile.inc.am
-include %reldir%/common/Makefile.inc.am
-include %reldir%/datacvt/Makefile.inc.am
-include %reldir%/routedata/Makefile.inc.am
-include %reldir%/detector/Makefile.inc.am
-include %reldir%/database/Makefile.inc.am
+include %reldir%/utils/Makefile.inc
+include %reldir%/common/Makefile.inc
+include %reldir%/datacvt/Makefile.inc
+include %reldir%/routedata/Makefile.inc
+include %reldir%/detector/Makefile.inc
+include %reldir%/database/Makefile.inc
 
 bin_PROGRAMS += build/bin/bgp_platform
 build_bin_bgp_platform_SOURCES = %reldir%/main.cc
