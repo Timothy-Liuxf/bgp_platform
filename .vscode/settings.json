@@ -1,5 +1,6 @@
 {
     "files.associations": {
+        "Makefile.inc": "automake",
         "*.mdx": "markdown",
         "array": "cpp",
         "atomic": "cpp",
