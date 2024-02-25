@@ -93,7 +93,8 @@ Write configurations in `config/config.json`. Take [`config/examples/config.json
 #### Run with docker
 
 + Mount the directory where the `config.json` is located to `/app/config`.
-+ Mount the directory where the data files is located to `/app/config`.
++ Mount the directory where the initalization information files are located to `/app/info`.
++ Mount the directory where the data files are located to `/app/data`.
 
 Take [`scripts/launch_docker.sh`](scripts/launch_docker.sh) for an example.
 
