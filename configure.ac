@@ -48,6 +48,12 @@ AX_CHECK_LIBPQXX_VERSION
 AC_CHECK_LIB([pq], [PQconnectdb], [], [AC_MSG_ERROR([libpq not found])])
 AC_CHECK_LIB([pqxx], [PQconnectdb], [], [AC_MSG_ERROR([libpqxx not found])])
 
+# Checks for programs
+AC_CHECK_PROG([BGPDUMP], [bgpdump], [yes])
+AS_IF([test X"$BGPDUMP" != X"yes"], [AC_MSG_ERROR([bgpdump not found])])
+AC_CHECK_PROG([PYTHON3], [python3], [yes])
+AS_IF([test X"$PYTHON3" != X"yes"], [AC_MSG_ERROR([python3 not found])])
+
 # Checks for header files.
 AC_CHECK_HEADERS([unistd.h])
 
