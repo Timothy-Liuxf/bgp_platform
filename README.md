@@ -80,11 +80,24 @@ $ make -j$(nproc)
 
 ## How to Run
 
+### Setup Database
+
+Setup a [PostgreSQL](https://www.postgresql.org/) server.
+
 ### Configuration
 
 Write configurations in `config/config.json`. Take [`config/examples/config.json`](config/examples/config.json) for an example.
 
 ### Run the program
+
+#### Run with docker
+
++ Mount the directory where the `config.json` is located to `/app/config`.
++ Mount the directory where the data files is located to `/app/config`.
+
+Take [`scripts/launch_docker.sh`](scripts/launch_docker.sh) for an example.
+
+#### Run on a local machine
 
 ```bash
 $ ./build/bin/bgp_platform [options]
