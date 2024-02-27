@@ -1,5 +1,9 @@
 # bgp_platform
 
+bgp_platform - BGP outage detection experimental platform
+
+Origin Repo: <https://github.com/Timothy-Liuxf/bgp_platform>
+
 ## How to Build
 
 ### Prerequisites
@@ -45,7 +49,7 @@ $ docker build . -f Dockerfile.base -t <base image name>
   ```Dockerfile
   FROM timothyliuxf/bgp_platform_base AS builder
   ```
-  
+
   Then change `timothyliuxf/bgp_platform_base` to `<base image name>` you set in the previous step.
 
 2. Build the target image:
