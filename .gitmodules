@@ -3,7 +3,7 @@
 	url = https://github.com/danielaparker/jsoncons.git
 [submodule "third_party/autoconf-archive"]
 	path = third_party/autoconf-archive
-	url = git://git.sv.gnu.org/autoconf-archive.git
+	url = https://github.com/autoconf-archive/autoconf-archive.git
 [submodule "third_party/inotify-cpp"]
 	path = third_party/inotify-cpp
 	url = https://github.com/erikzenker/inotify-cpp.git
