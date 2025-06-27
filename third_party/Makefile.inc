@@ -56,6 +56,16 @@ noinst_HEADERS +=                                                              \
     %reldir%/jsoncons/include/jsoncons/json_decoder.hpp                        \
     %reldir%/jsoncons/include/jsoncons/decode_traits.hpp                       \
     %reldir%/jsoncons/include/jsoncons/json_filter.hpp                         \
+    %reldir%/jsoncons/include/jsoncons_ext/csv/csv.hpp                         \
+    %reldir%/jsoncons/include/jsoncons_ext/csv/csv_cursor.hpp                  \
+    %reldir%/jsoncons/include/jsoncons_ext/csv/csv_encoder.hpp                 \
+    %reldir%/jsoncons/include/jsoncons_ext/csv/csv_error.hpp                   \
+    %reldir%/jsoncons/include/jsoncons_ext/csv/csv_options.hpp                 \
+    %reldir%/jsoncons/include/jsoncons_ext/csv/csv_parser.hpp                  \
+    %reldir%/jsoncons/include/jsoncons_ext/csv/csv_reader.hpp                  \
+    %reldir%/jsoncons/include/jsoncons_ext/csv/csv_serializer.hpp              \
+    %reldir%/jsoncons/include/jsoncons_ext/csv/decode_csv.hpp                  \
+    %reldir%/jsoncons/include/jsoncons_ext/csv/encode_csv.hpp                  \
     ${NOTHING}
 
 # inotify-cpp

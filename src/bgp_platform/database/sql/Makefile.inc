@@ -9,6 +9,7 @@ SQL_FILES =                                                                    \
     ${NOTHING}
 
 SQL_GENERATED_FILES = $(patsubst %,%.inc,$(SQL_FILES))
+BUILT_SOURCES += ${SQL_GENERATED_FILES}
 
 EXTRA_DIST += ${SQL_FILES}
 

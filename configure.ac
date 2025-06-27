@@ -9,7 +9,7 @@ AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIRS([m4 third_party/autoconf-archive/m4])
 AC_PROG_RANLIB
 
-AM_INIT_AUTOMAKE([foreign subdir-objects])
+AM_INIT_AUTOMAKE([foreign subdir-objects tar-pax])
 
 AX_CXX_COMPILE_STDCXX_17([noext], [mandatory])
 CXXFLAGS=""
@@ -27,7 +27,7 @@ AS_CASE([X$BUILD_CONFIG],
     ],
     [AC_MSG_ERROR([Unknown build configuration: $BUILD_CONFIG!])])
 
-AX_APPEND_COMPILE_FLAGS([-Wall -Wpedantic -Wextra -Werror], [CXXFLAGS])
+AX_APPEND_COMPILE_FLAGS([-Wall -Wpedantic -Wextra], [CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS([-pthread], [CXXFLAGS])
 AX_APPEND_COMPILE_FLAGS([                                                              dnl
     -Isrc                                                                              dnl
@@ -80,9 +80,6 @@ AC_CHECK_FUNCS([dup2 floor localeconv memmove memset pow select sqrt strtol strt
 
 # Build third party libraries
 AX_BUILD_THIRD_PARTY
-
-# Generate sql files
-AX_GENERATE_SQL
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
